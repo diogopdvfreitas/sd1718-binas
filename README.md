@@ -1,9 +1,8 @@
 # Projeto de Sistemas Distribuídos 2017/18 #
 
-Grupo CXX
-*(preencher com identificador de grupo e depois apagar esta linha)*
+Grupo A37
 
-... ... ...
+Diogo Freitas 81586 diogo.maria.freitas@gmail.com
 
 ... ... ...
 
