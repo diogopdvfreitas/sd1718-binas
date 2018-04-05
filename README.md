@@ -4,7 +4,7 @@ Grupo A37
 
 Diogo Freitas 81586 diogo.maria.freitas@gmail.com
 
-... ... ...
+Francisco Pereira 76196 fchamicapereira@gmail.com
 
 ... ... ...
 *(preencher com nome, número e email de membro do grupo e depois apagar esta linha)*
