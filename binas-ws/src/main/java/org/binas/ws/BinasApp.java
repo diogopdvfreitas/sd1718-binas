@@ -20,7 +20,8 @@ public class BinasApp {
 		BinasEndpointManager endpoint;
 		endpoint = new BinasEndpointManager(uddiURL, wsName, wsURL);
 	
-		BinasManager.getInstance().setUddiAndName(uddiURL, "A37_Station");
+		BinasManager.getInstance().setUddi(uddiURL);
+		BinasManager.getInstance().setVerbose(true);
 
 		// TODO start Web Service
 		try {

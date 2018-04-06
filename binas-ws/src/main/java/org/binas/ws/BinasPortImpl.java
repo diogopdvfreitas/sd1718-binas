@@ -69,7 +69,7 @@ public class BinasPortImpl implements BinasPortType {
 	@Override
 	public String testPing(String inputMessage) {
 		binasManager.getStations();
-		return null;
+		return binasManager.pingStations(inputMessage);
 	}
 
 	@Override

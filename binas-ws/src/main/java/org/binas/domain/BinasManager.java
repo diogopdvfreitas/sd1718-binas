@@ -1,19 +1,37 @@
 package org.binas.domain;
 
+import static javax.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
+
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.ws.BindingProvider;
 
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDIRecord;
+
+import org.binas.station.ws.StationPortType;
+import org.binas.station.ws.StationService;
+import org.binas.station.ws.StationView;
 
 public class BinasManager {
 
 	// Singleton -------------------------------------------------------------
 
 	private BinasManager() {
+		reset();
 	}
 	
-	String uddiURL;
-	String wsName;
+	private String uddiURL;
+	private String stationsName = "Station";
+	private Collection<StationPortType> stations;
+	private Collection<UDDIRecord> stationsRecord;
+	
+	private boolean verbose = false;
 
 	/**
 	 * SingletonHolder is loaded on the first execution of Singleton.getInstance()
@@ -26,25 +44,72 @@ public class BinasManager {
 	public static synchronized BinasManager getInstance() {
 		return SingletonHolder.INSTANCE;
 	}
+
+	public boolean isVerbose() {
+		return verbose;
+	}
 	
-	public void setUddiAndName(String uddiURL, String wsName) {
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
+	}
+	
+	public void setUddi(String uddiURL) {
 		this.uddiURL = uddiURL;
-		this.wsName = wsName;
+	}
+	
+	public synchronized void reset() {
+		emptyStations();
 	}
 
 	public void getStations() {
-		System.out.printf("Contacting UDDI at %s%n", uddiURL);
-
+		System.out.printf("Contacting UDDI at %s%n", uddiURL);	
 		try {
-			UDDINaming uddiNaming = new UDDINaming(uddiURL);
-			Collection<String> urls = uddiNaming.list(this.wsName + '%');		
-			System.out.println(urls);
+			uddiLookup();
+			createStub();
 		} catch (UDDINamingException une) {
-			System.out.printf("Error: %s", une);
+			System.out.printf("Error contacting the stations: %s%n", une);
 		}
-		
 	}
 	
-	// TODO
+	public synchronized void emptyStations() {
+		this.stations = Collections.synchronizedList(new ArrayList<StationPortType>());
+	}
+	
+	public void uddiLookup() throws UDDINamingException {
+		UDDINaming uddiNaming = new UDDINaming(uddiURL);
+		this.stationsRecord = uddiNaming.listRecords('%' + this.stationsName + '%'); 
+	}
+	
+	public void createStub() {
+		StationService service;
+		String wsURL;
+		StationPortType port;
+		
+		for(UDDIRecord ur : this.stationsRecord) {
+			
+			service = new StationService();
+			port = service.getStationPort();
+			
+			wsURL = ur.getUrl();
+			
+			if (verbose)
+				System.out.printf("Setting endpoint address for '%s'%n", wsURL);
+			
+			BindingProvider bindingProvider = (BindingProvider) port;
+			Map<String, Object> requestContext = bindingProvider.getRequestContext();
+			requestContext.put(ENDPOINT_ADDRESS_PROPERTY, wsURL);
+			
+			this.stations.add(port);
+		}
+	}
+	
+	public String pingStations(String inputMessage) {
+		StringBuilder builder = new StringBuilder();
+		for(StationPortType s : this.stations) {
+			builder.append(s.testPing(inputMessage));
+			builder.append("\n");
+		}
+		return builder.toString();
+	}
 
 }
