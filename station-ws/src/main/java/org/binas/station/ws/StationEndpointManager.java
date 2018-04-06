@@ -1,6 +1,8 @@
 package org.binas.station.ws;
 
 import java.io.IOException;
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
 
 import javax.xml.ws.Endpoint;
 
@@ -31,13 +33,13 @@ public class StationEndpointManager {
 	/** Web Service end point */
 	private Endpoint endpoint = null;
 
-	// /** UDDI Naming instance for contacting UDDI server */
-	// private UDDINaming uddiNaming = null;
-	//
+	/** UDDI Naming instance for contacting UDDI server */
+	private UDDINaming uddiNaming = null;
+
 	// /** Get UDDI Naming instance for contacting UDDI server */
-	// UDDINaming getUddiNaming() {
-	// return uddiNaming;
-	// }
+	UDDINaming getUddiNaming() {
+		return uddiNaming;
+	}
 
 	/** output option */
 	private boolean verbose = true;
@@ -55,6 +57,12 @@ public class StationEndpointManager {
 		this.uddiURL = uddiURL;
 		this.wsName = wsName;
 		this.wsURL = wsURL;
+		
+		try {
+			this.uddiNaming = new UDDINaming(this.uddiURL);			
+		} catch(UDDINamingException une) {
+			System.out.printf("Caught exception when trying to contact the UDDI: %s%n", une);
+		}
 	}
 
 	/** constructor with provided web service URL */
@@ -72,7 +80,8 @@ public class StationEndpointManager {
 			if (verbose) {
 				System.out.printf("Starting %s%n", wsURL);
 			}
-			endpoint.publish(wsURL);
+			
+			endpoint.publish(wsURL);				
 		} catch (Exception e) {
 			endpoint = null;
 			if (verbose) {
@@ -81,7 +90,13 @@ public class StationEndpointManager {
 			}
 			throw e;
 		}
-		publishToUDDI();
+		if (uddiNaming != null) {
+			try {	
+				publishToUDDI();			
+			} catch (UDDINamingException une) {
+				System.out.printf("Caught exception when trying to publish service to UDDI: %s%n", une);
+			}
+		}
 	}
 
 	public void awaitConnections() {
@@ -113,17 +128,31 @@ public class StationEndpointManager {
 			}
 		}
 		this.portImpl = null;
-		unpublishFromUDDI();
+		if (uddiURL != null) {
+			try {
+				unpublishFromUDDI();			
+			} catch (UDDINamingException une) {
+				System.out.printf("Caught exception when trying to unpublish service from UDDI: %s%n", une);
+			}			
+		}
+
 	}
 
 	/* UDDI */
 
-	void publishToUDDI() throws Exception {
-		// TODO
+	void publishToUDDI() throws UDDINamingException {
+		System.out.printf("Publishing '%s' under '%s' to UDDI...%n", wsName, wsURL);
+		uddiNaming.rebind(wsName, wsURL);
+		System.out.printf("Published '%s' under '%s' to UDDI%n", wsName, wsURL);
 	}
 
-	void unpublishFromUDDI() {
-		// TODO
+	void unpublishFromUDDI() throws UDDINamingException{
+		if (uddiNaming != null) {
+			System.out.printf("Deleting '%s' from UDDI...%n", wsName);
+			// delete from UDDI
+			uddiNaming.unbind(wsName);
+			System.out.printf("Deleted '%s' from UDDI%n", wsName);
+		}
 	}
 
 }

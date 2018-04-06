@@ -15,12 +15,20 @@ public class StationApp {
 			System.err.println("Usage: java " + StationApp.class.getName() + "wsName wsURL OR wsName wsURL uddiURL");
 			return;
 		}
+		
 		String wsName = args[0];
 		String wsURL = args[1];
+		String uddiURL = null;
+		StationEndpointManager endpoint;
 		
-		// TODO handle UDDI arguments
+		if (args.length > 2) {
+			uddiURL = args[2];
+			endpoint = new StationEndpointManager(uddiURL, wsName, wsURL);
+		} else {
+			System.out.printf("wsName: %s, wsURL: %s%n", wsName, wsURL);
+			endpoint = new StationEndpointManager(wsName, wsURL);
+		}
 
-		StationEndpointManager endpoint = new StationEndpointManager(wsName, wsURL);
 		Station.getInstance().setId(wsName);
 
 		System.out.println(StationApp.class.getSimpleName() + " running");

@@ -38,6 +38,12 @@
 			<artifactId>jaxws-rt</artifactId>
 			<version>2.2.10</version>
 		</dependency>
+		<!-- UDDI Naming -->
+	    <dependency>
+	        <groupId>pt.ulisboa.tecnico.sdis</groupId>
+	        <artifactId>uddi-naming</artifactId>
+	        <version>1.2</version>
+	    </dependency>
 	</dependencies>
 
 	<build>
@@ -73,6 +79,12 @@
 						<artifactId>jaxws-tools</artifactId>
 						<version>2.2.10</version>
 					</dependency>
+					<!-- UDDI Naming -->
+    					<dependency>
+        					<groupId>pt.ulisboa.tecnico.sdis</groupId>
+        					<artifactId>uddi-naming</artifactId>
+        					<version>1.2</version>
+    					</dependency>
 				</dependencies>
 			</plugin>
 			<plugin>
@@ -93,6 +105,7 @@
 					<arguments>
 						<argument>${ws.name}</argument>
 						<argument>${ws.url}</argument>
+						<argument>${uddi.url}</argument>
 					</arguments>
 				</configuration>
 			</plugin>

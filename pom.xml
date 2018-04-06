@@ -17,6 +17,8 @@
 
 		<module>binas-ws</module>
 		<module>binas-ws-cli</module>
+
+		<module>uddi-naming</module>
 	</modules>
 
 </project>
