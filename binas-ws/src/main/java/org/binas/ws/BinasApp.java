@@ -22,7 +22,7 @@ public class BinasApp {
 		BinasEndpointManager endpoint;
 		endpoint = new BinasEndpointManager(uddiURL, wsName, wsURL);
 	
-		BinasManager.getInstance().setUddi(uddiURL);
+		BinasManager.getInstance().setUddiUrl(uddiURL);
 		BinasManager.getInstance().setStationsNamePattern(stationsNamePattern);
 		BinasManager.getInstance().setVerbose(true);
 

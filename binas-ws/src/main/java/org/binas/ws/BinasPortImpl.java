@@ -5,9 +5,10 @@ import java.util.List;
 import javax.jws.WebService;
 
 import org.binas.domain.BinasManager;
-import org.binas.station.ws.BadInit_Exception;
-import org.binas.station.ws.StationView;
-import org.binas.station.ws.cli.StationClient;
+import org.binas.domain.User;
+import org.binas.exception.BadInitException;
+import org.binas.exception.EmailExistsException;
+import org.binas.exception.InvalidEmailException;
 import org.binas.ws.BinasPortType;
 
 @WebService(
@@ -48,8 +49,20 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public UserView activateUser(String email) throws EmailExists_Exception, InvalidEmail_Exception {
-		// TODO Auto-generated method stub
-		return null;
+		UserView userView = null;
+		try {
+			User user = this.binasManager.createAndAddUser(email);
+			userView = new UserView();
+			userView.setEmail(user.getEmail());
+			userView.setCredit(user.getCredit());
+			userView.setHasBina(user.hasBina());
+		} catch (EmailExistsException eee) {
+			throwEmailExists("There's already a user registered with this email");
+		} catch (InvalidEmailException iee) {
+			throwInvalidEmail("Invalid email: " + email);
+		}
+
+		return userView;
 	}
 
 	@Override
@@ -65,11 +78,37 @@ public class BinasPortImpl implements BinasPortType {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	// Test Control operations -----------------------------------------------
 
 	@Override
 	public String testPing(String inputMessage) {
+		// If no input is received, return a default name.
+		if (inputMessage == null || inputMessage.trim().length() == 0)
+			inputMessage = "friend";
+
+		// If the station does not have a name, return a default.
+		String wsName = endpointManager.getWsName();
+		if (wsName == null || wsName.trim().length() == 0)
+			wsName = "Station";
+
+		// Build a string with a message to return.
+		StringBuilder builder = new StringBuilder();
+		builder.append("Hello ").append(inputMessage);
+		builder.append(" from ").append(wsName);
+		builder.append('\n');
+		
 		binasManager.getStations();
-		return binasManager.pingStations(inputMessage);
+		
+		String stationsResponse = binasManager.pingStations(inputMessage);
+		
+		if (stationsResponse.length() == 0) {
+			builder.append("There are no active stations to ping\n");
+		} else {
+			builder.append(stationsResponse);			
+		}
+		
+		return builder.toString();
 	}
 
 	@Override
@@ -81,14 +120,45 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public void testClear() {
-		// TODO Auto-generated method stub
+		BinasManager.getInstance().reset();
 		
 	}
 
 	@Override
 	public void testInit(int userInitialPoints) throws org.binas.ws.BadInit_Exception {
-		// TODO Auto-generated method stub
+		try {
+			BinasManager.getInstance().init(userInitialPoints);
+		} catch (BadInitException bie) {
+			throwBadInit("User's initial points must be >= 0");
+		}
 		
+	}
+	
+	// Exception helpers-----------------------------------------------------
+	
+	/** Helper to throw a new NoBinaAvail exception. */
+	private void throwInvalidEmail(final String message) throws InvalidEmail_Exception {
+		InvalidEmail faultInfo = new InvalidEmail();
+		faultInfo.setMessage(message);
+		throw new InvalidEmail_Exception(message, faultInfo);
+	}
+	
+	private void throwEmailExists(final String message) throws EmailExists_Exception {
+		EmailExists faultInfo = new EmailExists();
+		faultInfo.setMessage(message);
+		throw new EmailExists_Exception(message, faultInfo);
+	}
+	
+	private void throwUserNotExists(final String message) throws UserNotExists_Exception {
+		UserNotExists faultInfo = new UserNotExists();
+		faultInfo.setMessage(message);
+		throw new UserNotExists_Exception(message, faultInfo);
+	}
+	
+	private void throwBadInit(final String message) throws BadInit_Exception {
+		BadInit faultInfo = new BadInit();
+		faultInfo.setMessage(message);
+		throw new BadInit_Exception(message, faultInfo);
 	}
 	
 }
