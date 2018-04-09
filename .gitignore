@@ -26,6 +26,7 @@ hs_err_pid*
 .project
 .settings/
 bin/
+.recommenders/
 
 # Mac
 .DS_Store
