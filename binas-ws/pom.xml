@@ -23,6 +23,7 @@
 
 		<ws.name>${group.id}_Binas</ws.name>
 		<ws.url>http://localhost:8080/binas-ws/endpoint</ws.url>
+		<stationsNamePattern>${group.id}_Station</stationsNamePattern>
 
 		<station.ws.name>${group.id}_Station</station.ws.name>
 
@@ -101,6 +102,7 @@
 						<argument>${uddi.url}</argument>
 						<argument>${ws.name}</argument>
 						<argument>${ws.url}</argument>
+						<argument>${stationsNamePattern}</argument>
 					</arguments>
 				</configuration>
 			</plugin>

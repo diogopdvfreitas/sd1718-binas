@@ -8,19 +8,22 @@ public class BinasApp {
 		System.out.println(BinasApp.class.getSimpleName() + " running");
 		
 		// Check arguments
-		if (args.length < 2) {
+		if (args.length < 3) {
 			System.err.println("Argument(s) missing!");
-			System.err.println("Usage: java " + BinasApp.class.getName() + "uddiURL wsName wsURL");
+			System.err.println("Usage: java " + BinasApp.class.getName() + "uddiURL wsName wsURL stationsWsNamePattern");
 			return;
 		}
 		
 		String uddiURL = args[0];
 		String wsName = args[1];
 		String wsURL = args[2];
+		String stationsNamePattern = args[3];
+		
 		BinasEndpointManager endpoint;
 		endpoint = new BinasEndpointManager(uddiURL, wsName, wsURL);
 	
 		BinasManager.getInstance().setUddi(uddiURL);
+		BinasManager.getInstance().setStationsNamePattern(stationsNamePattern);
 		BinasManager.getInstance().setVerbose(true);
 
 		// TODO start Web Service

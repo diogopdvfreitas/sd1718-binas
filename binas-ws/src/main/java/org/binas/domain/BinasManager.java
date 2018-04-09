@@ -5,7 +5,6 @@ import static javax.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import javax.xml.ws.BindingProvider;
@@ -16,7 +15,6 @@ import pt.ulisboa.tecnico.sdis.ws.uddi.UDDIRecord;
 
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
-import org.binas.station.ws.StationView;
 
 public class BinasManager {
 
@@ -27,7 +25,7 @@ public class BinasManager {
 	}
 	
 	private String uddiURL;
-	private String stationsName = "Station";
+	private String stationsNamePattern;
 	private Collection<StationPortType> stations;
 	private Collection<UDDIRecord> stationsRecord;
 	
@@ -57,6 +55,10 @@ public class BinasManager {
 		this.uddiURL = uddiURL;
 	}
 	
+	public void setStationsNamePattern(String stationsNamePattern) {
+		this.stationsNamePattern = stationsNamePattern;
+	}
+	
 	public synchronized void reset() {
 		emptyStations();
 	}
@@ -77,7 +79,7 @@ public class BinasManager {
 	
 	public void uddiLookup() throws UDDINamingException {
 		UDDINaming uddiNaming = new UDDINaming(uddiURL);
-		this.stationsRecord = uddiNaming.listRecords('%' + this.stationsName + '%'); 
+		this.stationsRecord = uddiNaming.listRecords('%' + this.stationsNamePattern + '%');
 	}
 	
 	public void createStub() {
