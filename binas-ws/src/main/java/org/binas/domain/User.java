@@ -67,12 +67,7 @@ public class User {
 	
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		for (int i = 0; i < this.email.length(); i++) {
-			result = prime * ( result + (i * this.email.charAt(i)));			
-		}
-		return result;
+		return this.email.hashCode();
 	}
 	
 	

@@ -13,7 +13,7 @@ import org.junit.Test;
 /**
  * Class that tests Ping operation
  */
-public class ReturnBina extends BaseIT {
+public class ReturnBinaIT extends BaseIT {
 	
 	private static final int X = 10;
 	private static final int Y = 20;
