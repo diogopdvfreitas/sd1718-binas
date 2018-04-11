@@ -14,9 +14,14 @@ import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDIRecord;
 
+import org.binas.exception.AlreadyHasBinaException;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
 import org.binas.exception.InvalidEmailException;
+import org.binas.exception.InvalidStationException;
+import org.binas.exception.NoBinaAvailException;
+import org.binas.exception.NoCreditException;
+import org.binas.exception.UserNotExistsException;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 
@@ -78,6 +83,17 @@ public class BinasManager {
 		emptyStations();
 		emptyUsers();
 	}
+	
+	public synchronized User createAndAddUser(String email) throws EmailExistsException, InvalidEmailException {
+		User user = new User(email, userInitialPoints);
+		
+		if (!this.users.add(user)) {
+			System.out.println("Duplicated");
+			throw new EmailExistsException();
+		};
+		
+		return user;
+	}
 
 	public void getStations() {
 		System.out.printf("Contacting UDDI at %s%n", uddiURL);	
@@ -89,10 +105,25 @@ public class BinasManager {
 		}
 	}
 	
+	public void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
+		NoBinaAvailException, NoCreditException, UserNotExistsException {
+		User user = getUser(email);
+		StationPort
+		if (user.hasBina()) throw new AlreadyHasBinaException();
+		
+	}
+	
  	// Getters -------------------------------------------------------------
 	
 	public synchronized Collection<User> getUsers() {
 		return this.users;
+	}
+	
+	public synchronized StationPortType getStation(String stationId) throws InvalidStationException {
+		for (StationPortType station : stations) {
+			if (station.getInfo().getId().equals(stationId)) return station;
+		}
+		throw new InvalidStationException();
 	}
 	
 	public synchronized org.binas.station.ws.StationView getStationView(String stationId) {
@@ -105,14 +136,14 @@ public class BinasManager {
 		return null;
 	}
 	
-	public synchronized User getUser(String email) {
+	public synchronized User getUser(String email) throws UserNotExistsException {
 		for(User user : this.users) {
 			if (user.getEmail() == email) {
 				return user;
 			};
 		}
 		
-		return null;
+		throw new UserNotExistsException();
 	}
 	
 	public synchronized void emptyStations() {
@@ -123,18 +154,7 @@ public class BinasManager {
 		this.users = Collections.synchronizedSet(new HashSet<User>());
 	}
 	
-	public synchronized User createAndAddUser(String email) throws EmailExistsException, InvalidEmailException {
-		User user = new User(email, userInitialPoints);
-		
-		if (!this.users.add(user)) {
-			System.out.println("Duplicated");
-			throw new EmailExistsException();
-		};
-		
-		return user;
-	}
-	
-	public synchronized void removeUser(String email) {
+	public synchronized void removeUser(String email) throws UserNotExistsException {
 		User user = getUser(email);
 		if (user != null) {
 			this.users.remove(user);			

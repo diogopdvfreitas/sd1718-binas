@@ -185,4 +185,28 @@ public class BinasPortImpl implements BinasPortType {
 		throw new BadInit_Exception(message, faultInfo);
 	}
 	
+	private void throwAlreadyHasBina(final String message) throws AlreadyHasBina_Exception {
+		AlreadyHasBina faultInfo = new AlreadyHasBina();
+		faultInfo.setMessage(message);
+		throw new AlreadyHasBina_Exception(message, faultInfo);
+	}
+
+	private void throwInvalidStation(final String message) throws InvalidStation_Exception {
+		InvalidStation faultInfo = new InvalidStation();
+		faultInfo.setMessage(message);
+		throw new InvalidStation_Exception(message, faultInfo);
+	}
+
+	private void throwNoBinaAvail(final String message) throws NoBinaAvail_Exception {
+		NoBinaAvail faultInfo = new NoBinaAvail();
+		faultInfo.setMessage(message);
+		throw new NoBinaAvail_Exception(message, faultInfo);
+	}
+
+	private void throwNoCredit(final String message) throws NoCredit_Exception {
+		NoCredit faultInfo = new NoCredit();
+		faultInfo.setMessage(message);
+		throw new NoCredit_Exception(message, faultInfo);
+	}
+	
 }
