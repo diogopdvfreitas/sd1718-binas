@@ -39,7 +39,7 @@ public class BinasPortImpl implements BinasPortType {
 	public List<org.binas.ws.StationView> listStations(Integer numberOfStations, CoordinatesView coordinates) {
 		List<org.binas.ws.StationView> stationsList = new ArrayList<org.binas.ws.StationView>();
 		
-		for (org.binas.station.ws.StationView sv : binasManager.getStationsViewList()) {
+		for (org.binas.station.ws.StationView sv : binasManager.getNearestStationsList(numberOfStations, coordinates)) {
 			stationsList.add(buildStationView(sv));
 		}
 		
@@ -48,7 +48,14 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public org.binas.ws.StationView getInfoStation(String stationId) throws InvalidStation_Exception {
-		return buildStationView(binasManager.getStationView(stationId));
+		StationView stationView = null;
+		try {
+			stationView = buildStationView(binasManager.getStationView(stationId));
+		} catch (InvalidStationException ise) {
+			throwInvalidStation("Station '" + stationId + "' not found");
+		}
+		
+		return stationView;
 	}
 
 	@Override
