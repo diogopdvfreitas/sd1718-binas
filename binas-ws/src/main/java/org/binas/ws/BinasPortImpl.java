@@ -37,24 +37,7 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public org.binas.ws.StationView getInfoStation(String stationId) throws InvalidStation_Exception {
-		org.binas.station.ws.StationView sv = binasManager.getStationView(stationId);
-		org.binas.station.ws.CoordinatesView cv =sv.getCoordinate();
-		
-		StationView stationView = new StationView();
-		CoordinatesView coordinatesView = new CoordinatesView();
-		
-		coordinatesView.setX(cv.getX());
-		coordinatesView.setY(cv.getY());
-		
-		stationView.setId(sv.getId());
-		stationView.setCoordinate(coordinatesView);
-		stationView.setCapacity(sv.getCapacity());
-		stationView.setTotalGets(sv.getTotalGets());
-		stationView.setTotalReturns(sv.getTotalReturns());
-		stationView.setAvailableBinas(sv.getAvailableBinas());
-		stationView.setFreeDocks(sv.getFreeDocks());
-		
-		return stationView;
+		return buildStationView(binasManager.getStationView(stationId));
 	}
 
 	@Override
@@ -148,6 +131,31 @@ public class BinasPortImpl implements BinasPortType {
 			throwBadInit("User's initial points must be >= 0");
 		}
 		
+	}
+	
+	// View conversion helpers-----------------------------------------------
+	
+	private StationView buildStationView(org.binas.station.ws.StationView sv) {		
+		StationView stationView = new StationView();
+		
+		stationView.setId(sv.getId());
+		stationView.setCoordinate(buildCoordinatesView(sv.getCoordinate()));
+		stationView.setCapacity(sv.getCapacity());
+		stationView.setTotalGets(sv.getTotalGets());
+		stationView.setTotalReturns(sv.getTotalReturns());
+		stationView.setAvailableBinas(sv.getAvailableBinas());
+		stationView.setFreeDocks(sv.getFreeDocks());
+		
+		return stationView;
+	}
+	
+	private CoordinatesView buildCoordinatesView(org.binas.station.ws.CoordinatesView cv) {
+		CoordinatesView coordinatesView = new CoordinatesView();
+		
+		coordinatesView.setX(cv.getX());
+		coordinatesView.setY(cv.getY());
+		
+		return coordinatesView;
 	}
 	
 	// Exception helpers-----------------------------------------------------
