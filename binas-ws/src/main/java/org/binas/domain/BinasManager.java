@@ -95,6 +95,16 @@ public class BinasManager {
 		return this.users;
 	}
 	
+	public synchronized org.binas.station.ws.StationView getStationView(String stationId) {
+		for (StationPortType station : this.stations) {
+			if (station.getInfo().getId() == stationId) {
+				return station.getInfo();
+			}
+		}
+			
+		return null;
+	}
+	
 	public synchronized User getUser(String email) {
 		for(User user : this.users) {
 			if (user.getEmail() == email) {

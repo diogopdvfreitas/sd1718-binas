@@ -37,8 +37,24 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public org.binas.ws.StationView getInfoStation(String stationId) throws InvalidStation_Exception {
-		// TODO Auto-generated method stub
-		return null;
+		org.binas.station.ws.StationView sv = binasManager.getStationView(stationId);
+		org.binas.station.ws.CoordinatesView cv =sv.getCoordinate();
+		
+		StationView stationView = new StationView();
+		CoordinatesView coordinatesView = new CoordinatesView();
+		
+		coordinatesView.setX(cv.getX());
+		coordinatesView.setY(cv.getY());
+		
+		stationView.setId(sv.getId());
+		stationView.setCoordinate(coordinatesView);
+		stationView.setCapacity(sv.getCapacity());
+		stationView.setTotalGets(sv.getTotalGets());
+		stationView.setTotalReturns(sv.getTotalReturns());
+		stationView.setAvailableBinas(sv.getAvailableBinas());
+		stationView.setFreeDocks(sv.getFreeDocks());
+		
+		return stationView;
 	}
 
 	@Override
