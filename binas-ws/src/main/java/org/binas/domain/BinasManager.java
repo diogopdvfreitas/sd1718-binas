@@ -23,6 +23,7 @@ import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
 import org.binas.exception.NoCreditException;
 import org.binas.exception.UserNotExistsException;
+import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 
@@ -108,9 +109,22 @@ public class BinasManager {
 	
 	public void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
 		NoBinaAvailException, NoCreditException, UserNotExistsException {
-		User user = getUser(email);
-		if (user.hasBina()) throw new AlreadyHasBinaException();
 		
+		User user = getUser(email);
+		StationPortType station = getStation(stationId);
+		
+		if (user.hasBina()) throw new AlreadyHasBinaException();
+		if (!user.takeBina()) throw new NoCreditException();
+		
+		try {
+			station.getBina();
+		} catch (NoBinaAvail_Exception nbae) {
+			
+			// must increment the credit by 1, because an error occurred and we want to rollback the user state
+			user.returnBina(1);
+			
+			throw new NoBinaAvailException();
+		}
 	}
 	
  	// Getters -------------------------------------------------------------
