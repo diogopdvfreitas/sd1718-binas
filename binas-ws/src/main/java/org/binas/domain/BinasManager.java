@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.ws.BindingProvider;
@@ -103,6 +104,15 @@ public class BinasManager {
 		}
 			
 		return null;
+	}
+	
+	public synchronized List<org.binas.station.ws.StationView> getStationsViewList() {
+		List<org.binas.station.ws.StationView> stationsList = new ArrayList<org.binas.station.ws.StationView>();
+		for (StationPortType station : this.stations) {
+			stationsList.add(station.getInfo());
+		}
+		
+		return stationsList;
 	}
 	
 	public synchronized User getUser(String email) {

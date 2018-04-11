@@ -1,5 +1,6 @@
 package org.binas.ws;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.jws.WebService;
@@ -31,8 +32,13 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public List<org.binas.ws.StationView> listStations(Integer numberOfStations, CoordinatesView coordinates) {
-		// TODO Auto-generated method stub
-		return null;
+		List<org.binas.ws.StationView> stationsList = new ArrayList<org.binas.ws.StationView>();
+		
+		for (org.binas.station.ws.StationView sv : binasManager.getStationsViewList()) {
+			stationsList.add(buildStationView(sv));
+		}
+		
+		return stationsList;
 	}
 
 	@Override
