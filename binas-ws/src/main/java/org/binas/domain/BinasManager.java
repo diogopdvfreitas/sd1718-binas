@@ -107,7 +107,7 @@ public class BinasManager {
 		}
 	}
 	
-	public void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
+	public synchronized void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
 		NoBinaAvailException, NoCreditException, UserNotExistsException {
 		
 		User user = getUser(email);
