@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.ws.BindingProvider;
@@ -108,7 +109,6 @@ public class BinasManager {
 	public void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
 		NoBinaAvailException, NoCreditException, UserNotExistsException {
 		User user = getUser(email);
-		StationPort
 		if (user.hasBina()) throw new AlreadyHasBinaException();
 		
 	}
@@ -117,6 +117,16 @@ public class BinasManager {
 	
 	public synchronized Collection<User> getUsers() {
 		return this.users;
+	}
+
+	public synchronized User getUser(String email) throws UserNotExistsException {
+		for(User user : this.users) {
+			if (user.getEmail().equals(email)) {
+				return user;
+			};
+		}
+		
+		throw new UserNotExistsException();
 	}
 	
 	public synchronized StationPortType getStation(String stationId) throws InvalidStationException {
@@ -136,14 +146,13 @@ public class BinasManager {
 		return null;
 	}
 	
-	public synchronized User getUser(String email) throws UserNotExistsException {
-		for(User user : this.users) {
-			if (user.getEmail() == email) {
-				return user;
-			};
+	public synchronized List<org.binas.station.ws.StationView> getStationsViewList() {
+		List<org.binas.station.ws.StationView> stationsList = new ArrayList<org.binas.station.ws.StationView>();
+		for (StationPortType station : this.stations) {
+			stationsList.add(station.getInfo());
 		}
 		
-		throw new UserNotExistsException();
+		return stationsList;
 	}
 	
 	public synchronized void emptyStations() {
