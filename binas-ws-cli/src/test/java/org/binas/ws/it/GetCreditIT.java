@@ -10,11 +10,11 @@ import org.binas.ws.InvalidEmail_Exception;
 import org.binas.ws.UserNotExists_Exception;
 import org.binas.ws.UserView;
 
-public class GetCreditTest extends BaseIT{
+public class GetCreditIT extends BaseIT{
 
 	private static final Integer USER_INITIAL_POINTS = 10;
 	private static final String EMAIL = "e.2.mail@that.serv1ce.com";
-	private static final String EMAIL1 = "e.2.mailil@that.serv1ce.com";
+	private static final String EMAIL1 = "e.1.mail@that.serv1ce.com";
 	
 	@Before
 	public void setUp() throws Exception {
