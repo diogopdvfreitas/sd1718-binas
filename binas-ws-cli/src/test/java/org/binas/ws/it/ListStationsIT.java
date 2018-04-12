@@ -35,13 +35,11 @@ public class ListStationsIT extends BaseIT {
 		assertEquals(list.get(0).getCoordinate().getX(), (Integer) 5);
 		assertEquals(list.get(0).getCoordinate().getY(), (Integer) 5);
 		assertEquals(list.get(0).getCapacity(), CAPACITY);
-		assertEquals(list.get(0).getId(), "A37_Station2");
-		assertEquals(list.get(0).getCoordinate().getX(), (Integer) 10);
-		assertEquals(list.get(0).getCoordinate().getY(), (Integer) 10);
-		assertEquals(list.get(0).getCapacity(), CAPACITY);
+		assertEquals(list.get(1).getId(), "A37_Station2");
+		assertEquals(list.get(1).getCoordinate().getX(), (Integer) 10);
+		assertEquals(list.get(1).getCoordinate().getY(), (Integer) 10);
+		assertEquals(list.get(1).getCapacity(), CAPACITY);
 	}
-
-	
 	
 	@After
 	public void tearDown() throws Exception {

@@ -29,10 +29,6 @@ public class GetInfoStationIT extends BaseIT {
 			assertEquals(stationView.getCoordinate().getX(), (Integer) X);
 			assertEquals(stationView.getCoordinate().getY(), (Integer) Y);
 			assertEquals(stationView.getCapacity(), CAPACITY);
-			/*assertEquals(stationView.getTotalGets(), 0);
-			assertEquals(stationView.getTotalReturns(), 0);
-			assertEquals(stationView.getAvailableBinas(), );
-			assertEquals(stationView.getFreeDocks(), );*/
 		} catch (InvalidStation_Exception ise) {
 			fail("Invalid Station ID");
 		}
