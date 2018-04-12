@@ -3,8 +3,11 @@ package org.binas.domain;
 import static javax.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +26,11 @@ import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
 import org.binas.exception.NoCreditException;
 import org.binas.exception.UserNotExistsException;
+import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
+import org.binas.station.ws.StationView;
+import org.binas.ws.CoordinatesView;
 
 public class BinasManager {
 
@@ -106,11 +112,24 @@ public class BinasManager {
 		}
 	}
 	
-	public void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
+	public synchronized void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
 		NoBinaAvailException, NoCreditException, UserNotExistsException {
-		User user = getUser(email);
-		if (user.hasBina()) throw new AlreadyHasBinaException();
 		
+		User user = getUser(email);
+		StationPortType station = getStation(stationId);
+		
+		if (user.hasBina()) throw new AlreadyHasBinaException();
+		if (!user.takeBina()) throw new NoCreditException();
+		
+		try {
+			station.getBina();
+		} catch (NoBinaAvail_Exception nbae) {
+			
+			// must increment the credit by 1, because an error occurred and we want to rollback the user state
+			user.returnBina(1);
+			
+			throw new NoBinaAvailException();
+		}
 	}
 	
  	// Getters -------------------------------------------------------------
@@ -136,23 +155,63 @@ public class BinasManager {
 		throw new InvalidStationException();
 	}
 	
-	public synchronized org.binas.station.ws.StationView getStationView(String stationId) {
+	public synchronized org.binas.station.ws.StationView getStationView(String stationId) throws InvalidStationException {
 		for (StationPortType station : this.stations) {
-			if (station.getInfo().getId() == stationId) {
+			if (station.getInfo().getId().equals(stationId))
 				return station.getInfo();
-			}
 		}
-			
-		return null;
+		throw new InvalidStationException();
 	}
 	
-	public synchronized List<org.binas.station.ws.StationView> getStationsViewList() {
+	public synchronized List<org.binas.station.ws.StationView> getNearestStationsList(Integer numberOfStations, CoordinatesView coordinates) {
 		List<org.binas.station.ws.StationView> stationsList = new ArrayList<org.binas.station.ws.StationView>();
+		Integer xO = coordinates.getX(); Integer yO = coordinates.getY();
+		Comparator<StationView> comparator = new Comparator<StationView>() {
+			@Override
+			public int compare(StationView st1, StationView st2) {
+				Integer x1 = st1.getCoordinate().getX(); Integer y1 = st1.getCoordinate().getY(); Double dist1;
+				Integer x2 = st2.getCoordinate().getX(); Integer y2 = st1.getCoordinate().getY(); Double dist2;
+				
+				dist1 = Math.sqrt(Math.pow((xO - x1), 2) + Math.pow((yO - y1), 2));
+				dist2 = Math.sqrt(Math.pow((xO - x2), 2) + Math.pow((yO - y2), 2));
+				
+				return (int) Math.floor(dist1 - dist2);
+			}
+		};
+		/*Map<org.binas.station.ws.StationView, Double> stationsDistanceToCoordinates = new HashMap<org.binas.station.ws.StationView, Double>();
+		
+		Integer x1 = coordinates.getX(); Integer y1 = coordinates.getY();
+		Integer x2, y2;
+		Double distance;
+		for (StationPortType station : this.stations) {
+			x2 = station.getInfo().getCoordinate().getX();
+			y2 = station.getInfo().getCoordinate().getY();
+			
+			distance = Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
+			stationsDistanceToCoordinates.put(station.getInfo(), distance);
+		}
+		
+		for (int i = 0; i < numberOfStations; i++) {
+			org.binas.station.ws.StationView minSV = (StationView) stationsDistanceToCoordinates.keySet().toArray()[0];  // Don't know if this actually works, it supposedly selects the "first" key of the map
+			Double min = stationsDistanceToCoordinates.get(minSV);
+			
+			for (Map.Entry<org.binas.station.ws.StationView, Double> entry : stationsDistanceToCoordinates.entrySet()) {
+				if (entry.getValue() < min) {
+					min = entry.getValue();
+					minSV = entry.getKey();
+				}
+			}
+			stationsList.add(minSV);
+			stationsDistanceToCoordinates.remove(minSV);
+		}*/
+		
 		for (StationPortType station : this.stations) {
 			stationsList.add(station.getInfo());
 		}
 		
-		return stationsList;
+		stationsList.sort(comparator);
+		
+		return stationsList.subList(0, numberOfStations);
 	}
 	
 	public synchronized void emptyStations() {

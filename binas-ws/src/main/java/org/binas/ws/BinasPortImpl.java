@@ -7,9 +7,13 @@ import javax.jws.WebService;
 
 import org.binas.domain.BinasManager;
 import org.binas.domain.User;
+import org.binas.exception.AlreadyHasBinaException;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
 import org.binas.exception.InvalidEmailException;
+import org.binas.exception.InvalidStationException;
+import org.binas.exception.NoBinaAvailException;
+import org.binas.exception.NoCreditException;
 import org.binas.exception.UserNotExistsException;
 import org.binas.ws.BinasPortType;
 
@@ -35,7 +39,7 @@ public class BinasPortImpl implements BinasPortType {
 	public List<org.binas.ws.StationView> listStations(Integer numberOfStations, CoordinatesView coordinates) {
 		List<org.binas.ws.StationView> stationsList = new ArrayList<org.binas.ws.StationView>();
 		
-		for (org.binas.station.ws.StationView sv : binasManager.getStationsViewList()) {
+		for (org.binas.station.ws.StationView sv : binasManager.getNearestStationsList(numberOfStations, coordinates)) {
 			stationsList.add(buildStationView(sv));
 		}
 		
@@ -44,7 +48,14 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public org.binas.ws.StationView getInfoStation(String stationId) throws InvalidStation_Exception {
-		return buildStationView(binasManager.getStationView(stationId));
+		StationView stationView = null;
+		try {
+			stationView = buildStationView(binasManager.getStationView(stationId));
+		} catch (InvalidStationException ise) {
+			throwInvalidStation("Station '" + stationId + "' not found");
+		}
+		
+		return stationView;
 	}
 
 	@Override
@@ -79,8 +90,19 @@ public class BinasPortImpl implements BinasPortType {
 	@Override
 	public void rentBina(String stationId, String email) throws AlreadyHasBina_Exception, InvalidStation_Exception,
 			NoBinaAvail_Exception, NoCredit_Exception, UserNotExists_Exception {
-		// TODO Auto-generated method stub
-		
+		try {
+			this.binasManager.rentBina(stationId, email);
+		} catch (UserNotExistsException unee) {
+			throwUserNotExists("User with email '" + email + "' is not registered");
+		} catch (InvalidStationException ise) {
+			throwInvalidStation("Station '" + stationId + "' not found");
+		} catch (AlreadyHasBinaException ahbe) {
+			throwAlreadyHasBina("User already has a bina");
+		} catch (NoBinaAvailException nbae) {
+			throwNoBinaAvail("There are no available binas at this station (" + stationId + ")");
+		} catch (NoCreditException nce) {
+			throwNoCredit("User doesn't have enough credit to rent a bina");
+		}
 	}
 
 	@Override
