@@ -87,16 +87,14 @@ public class BinasManager {
 		emptyUsers();
 	}
 	
-	public synchronized void initStation(String stationId, int x, int y, int capacity, int returnPrize) throws BadInitException {
+	public synchronized void initStation(String stationId, int x, int y, int capacity, int returnPrize) throws BadInitException, InvalidStationException {
 		try {
 			StationPortType station = getStation(stationId);
-			try {
-				station.testInit(x, y, capacity, returnPrize);
-			} catch (BadInit_Exception e) {
-				throw new BadInitException();
-			}
-		} catch (InvalidStationException ise) {
+			station.testInit(x, y, capacity, returnPrize);
+		} catch (BadInit_Exception e) {
 			throw new BadInitException();
+		} catch (InvalidStationException ise) {
+			throw new InvalidStationException();
 		}
 	}
 	

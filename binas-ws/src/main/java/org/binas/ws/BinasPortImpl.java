@@ -151,6 +151,8 @@ public class BinasPortImpl implements BinasPortType {
 			binasManager.initStation(stationId, x, y, capacity, returnPrize);
 		} catch (BadInitException bie) {
 			throwBadInit("Invalid initialization values!");
+		} catch (InvalidStationException ise) {
+			throwBadInit("Invalid Station ID!");
 		}
 	}
 
