@@ -263,6 +263,9 @@ public class BinasManager {
 		
 		stationsList.sort(comparator);
 		
+		if (stationsList.size() < numberOfStations)
+			return stationsList;
+		
 		return stationsList.subList(0, numberOfStations);
 	}
 
