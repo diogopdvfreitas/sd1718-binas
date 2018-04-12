@@ -1,12 +1,30 @@
 package org.binas.station.ws;
 
 import org.binas.station.domain.Station;
+import org.binas.station.domain.exception.BadInitException;
 
 /**
  * The application is where the service starts running. The program arguments
  * are processed here. Other configurations can also be done here.
  */
 public class StationApp {
+	
+	private static void loadProperties(String x, String y, String capacity, String bonus) {
+		int intX, intY, intCapacity, intBonus;
+		try {
+			intX = Integer.parseInt(x);
+			intY = Integer.parseInt(y);
+			intCapacity = Integer.parseInt(capacity);
+			intBonus = Integer.parseInt(bonus);
+			Station.getInstance().init(intX, intY, intCapacity, intBonus);
+		} catch (NumberFormatException nfe) {
+			System.out.println("Invalid arguments: one of the properties is not an integer");
+		} catch (BadInitException e) {
+			System.out.println(e.getMessage());
+			System.exit(1);
+		}
+		
+	}
 
 	public static void main(String[] args) throws Exception {
 		// Check arguments
@@ -27,24 +45,15 @@ public class StationApp {
 		if (args.length == 3 || args.length == 7) {
 			uddiURL = args[2];
 			
-			if (args.length == 7) {
-				coordinateX = Integer.parseInt(args[3]);
-				coordinateY = Integer.parseInt(args[4]);
-				capacity = Integer.parseInt(args[5]);
-				bonus = Integer.parseInt(args[6]);
-				Station.getInstance().init(coordinateX, coordinateY, capacity, bonus);
+			if (args.length == 7 && args[3] != null) {
+				loadProperties(args[3], args[4], args[5], args[6]);
 			}
-			
 			
 			endpoint = new StationEndpointManager(uddiURL, wsName, wsURL);
 		} else {
 			
-			if (args.length == 6) {
-				coordinateX = Integer.parseInt(args[2]);
-				coordinateY = Integer.parseInt(args[3]);
-				capacity = Integer.parseInt(args[4]);
-				bonus = Integer.parseInt(args[5]);
-				Station.getInstance().init(coordinateX, coordinateY, capacity, bonus);
+			if (args.length == 6 && args[2] != null) {
+				loadProperties(args[2], args[3], args[4], args[5]);
 			}
 			
 			System.out.printf("wsName: %s, wsURL: %s%n", wsName, wsURL);

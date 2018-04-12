@@ -109,7 +109,6 @@ public class BinasManager {
 		User user = new User(email, userInitialPoints);
 		
 		if (!this.users.add(user)) {
-			System.out.println("Duplicated");
 			throw new EmailExistsException();
 		};
 		
