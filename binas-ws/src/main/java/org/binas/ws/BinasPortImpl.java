@@ -11,6 +11,7 @@ import org.binas.exception.AlreadyHasBinaException;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
 import org.binas.exception.InvalidEmailException;
+import org.binas.exception.InvalidNumberOfStationsException;
 import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
 import org.binas.exception.NoCreditException;
@@ -39,8 +40,12 @@ public class BinasPortImpl implements BinasPortType {
 	public List<org.binas.ws.StationView> listStations(Integer numberOfStations, CoordinatesView coordinates) {
 		List<org.binas.ws.StationView> stationsList = new ArrayList<org.binas.ws.StationView>();
 		
-		for (org.binas.station.ws.StationView sv : binasManager.getNearestStationsList(numberOfStations, coordinates)) {
-			stationsList.add(buildStationView(sv));
+		try {
+			for (org.binas.station.ws.StationView sv : binasManager.getNearestStationsList(numberOfStations, coordinates)) {
+				stationsList.add(buildStationView(sv));
+			}
+		} catch (InvalidNumberOfStationsException inse) {
+			throwInvalidNumberOfStations("Number of stations exceeds number of existing stations!");
 		}
 		
 		return stationsList;
@@ -246,6 +251,12 @@ public class BinasPortImpl implements BinasPortType {
 		NoCredit faultInfo = new NoCredit();
 		faultInfo.setMessage(message);
 		throw new NoCredit_Exception(message, faultInfo);
+	}
+	
+	private void throwInvalidNumberOfStations(final String message) throws InvalidNumberOfStations_Exception {
+		InvalidNumberOfStations faultInfo = new InvalidNumberOfStations();
+		faultInfo.setMessage(message);
+		throw new InvalidNumberOfStations_Exception(message, faultInfo);
 	}
 	
 }

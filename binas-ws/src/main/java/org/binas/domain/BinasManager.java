@@ -22,6 +22,7 @@ import org.binas.exception.AlreadyHasBinaException;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
 import org.binas.exception.InvalidEmailException;
+import org.binas.exception.InvalidNumberOfStationsException;
 import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
 import org.binas.exception.NoCreditException;
@@ -175,7 +176,7 @@ public class BinasManager {
 		throw new InvalidStationException();
 	}
 	
-	public synchronized List<org.binas.station.ws.StationView> getNearestStationsList(Integer numberOfStations, CoordinatesView coordinates) {
+	public synchronized List<org.binas.station.ws.StationView> getNearestStationsList(Integer numberOfStations, CoordinatesView coordinates) throws InvalidNumberOfStationsException {
 		List<org.binas.station.ws.StationView> stationsList = new ArrayList<org.binas.station.ws.StationView>();
 		Integer xO = coordinates.getX(); Integer yO = coordinates.getY();
 		Comparator<StationView> comparator = new Comparator<StationView>() {
@@ -190,38 +191,15 @@ public class BinasManager {
 				return (int) Math.floor(dist1 - dist2);
 			}
 		};
-		/*Map<org.binas.station.ws.StationView, Double> stationsDistanceToCoordinates = new HashMap<org.binas.station.ws.StationView, Double>();
-		
-		Integer x1 = coordinates.getX(); Integer y1 = coordinates.getY();
-		Integer x2, y2;
-		Double distance;
-		for (StationPortType station : this.stations) {
-			x2 = station.getInfo().getCoordinate().getX();
-			y2 = station.getInfo().getCoordinate().getY();
-			
-			distance = Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
-			stationsDistanceToCoordinates.put(station.getInfo(), distance);
-		}
-		
-		for (int i = 0; i < numberOfStations; i++) {
-			org.binas.station.ws.StationView minSV = (StationView) stationsDistanceToCoordinates.keySet().toArray()[0];  // Don't know if this actually works, it supposedly selects the "first" key of the map
-			Double min = stationsDistanceToCoordinates.get(minSV);
-			
-			for (Map.Entry<org.binas.station.ws.StationView, Double> entry : stationsDistanceToCoordinates.entrySet()) {
-				if (entry.getValue() < min) {
-					min = entry.getValue();
-					minSV = entry.getKey();
-				}
-			}
-			stationsList.add(minSV);
-			stationsDistanceToCoordinates.remove(minSV);
-		}*/
 		
 		for (StationPortType station : this.stations) {
 			stationsList.add(station.getInfo());
 		}
 		
 		stationsList.sort(comparator);
+		
+		if (stationsList.size() < numberOfStations)
+			throw new InvalidNumberOfStationsException();
 		
 		return stationsList.subList(0, numberOfStations);
 	}

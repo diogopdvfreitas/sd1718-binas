@@ -38,6 +38,16 @@ public class GetInfoStationIT extends BaseIT {
 		}
 	}
 	
+	@Test(expected = InvalidStation_Exception.class)
+	public void invalidStationId() throws InvalidStation_Exception {
+		try {
+			client.getInfoStation("A37_Station200");
+		} catch (InvalidStation_Exception ise) {
+			fail("Couldn't find a station with that ID!");
+		}
+	}
+	
+	
 	@After
 	public void tearDown() throws Exception {
 		client.testClear();
