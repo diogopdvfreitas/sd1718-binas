@@ -10,9 +10,11 @@ import org.binas.domain.User;
 import org.binas.exception.AlreadyHasBinaException;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
+import org.binas.exception.FullStationException;
 import org.binas.exception.InvalidEmailException;
 import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
+import org.binas.exception.NoBinaRentedException;
 import org.binas.exception.NoCreditException;
 import org.binas.exception.UserNotExistsException;
 import org.binas.ws.BinasPortType;
@@ -110,7 +112,17 @@ public class BinasPortImpl implements BinasPortType {
 	@Override
 	public void returnBina(String stationId, String email)
 			throws FullStation_Exception, InvalidStation_Exception, NoBinaRented_Exception, UserNotExists_Exception {
-		// TODO Auto-generated method stub
+		try {
+			this.binasManager.returnBina(stationId, email);
+		} catch (FullStationException unee) {
+			throwFullStation("User does not have a rented Bina");
+		} catch (InvalidStationException ise) {
+			throwInvalidStation("Station '" + stationId + "' not found");
+		} catch (UserNotExistsException unee) {
+			throwUserNotExists("User with email '" + email + "' is not registered");
+		} catch (NoBinaRentedException nce) {
+			throwNoBina("User does not have a rented Bina");
+		}
 		
 	}
 	
@@ -248,4 +260,16 @@ public class BinasPortImpl implements BinasPortType {
 		throw new NoCredit_Exception(message, faultInfo);
 	}
 	
+	private void throwFullStation(final String message) throws FullStation_Exception {
+		FullStation faultInfo = new FullStation();
+		faultInfo.setMessage(message);
+		throw new FullStation_Exception(message, faultInfo);
+	}
+	
+	private void throwNoBina(final String message) throws NoBinaRented_Exception {
+		NoBinaRented faultInfo = new NoBinaRented();
+		faultInfo.setMessage(message);
+		throw new NoBinaRented_Exception(message, faultInfo);
+	}
+
 }

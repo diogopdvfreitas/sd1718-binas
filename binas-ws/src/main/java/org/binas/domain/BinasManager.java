@@ -19,17 +19,24 @@ import pt.ulisboa.tecnico.sdis.ws.uddi.UDDIRecord;
 import org.binas.exception.AlreadyHasBinaException;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
+import org.binas.exception.FullStationException;
 import org.binas.exception.InvalidEmailException;
 import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
+import org.binas.exception.NoBinaRentedException;
 import org.binas.exception.NoCreditException;
 import org.binas.exception.UserNotExistsException;
 import org.binas.station.ws.BadInit_Exception;
 import org.binas.station.ws.NoBinaAvail_Exception;
+import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 import org.binas.station.ws.StationView;
 import org.binas.ws.CoordinatesView;
+import org.binas.ws.FullStation_Exception;
+import org.binas.ws.InvalidStation_Exception;
+import org.binas.ws.NoBinaRented_Exception;
+import org.binas.ws.UserNotExists_Exception;
 
 public class BinasManager {
 
@@ -239,6 +246,21 @@ public class BinasManager {
 			
 			throw new NoBinaAvailException();
 		}
+	}
+	
+	public synchronized void returnBina(String stationId, String email) throws FullStationException, InvalidStationException,
+		NoBinaRentedException, UserNotExistsException {
+		
+		int bonus = 0;		
+		User user = getUser(email);
+		StationPortType station = getStation(stationId);
+		
+		if(!user.hasBina()) throw new NoBinaRentedException();
+		
+		try {
+			bonus = station.returnBina();
+			user.returnBina(bonus);
+		} catch(NoSlotAvail_Exception nsae) { throw new FullStationException(); }		
 	}
 	
 	public synchronized List<org.binas.station.ws.StationView> getNearestStationsList(Integer numberOfStations, CoordinatesView coordinates) {

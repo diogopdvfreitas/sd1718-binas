@@ -56,6 +56,13 @@ public class User {
 		return true;
 	}
 	
+	public boolean takeBina(int points) {
+		if (this.credit < 1) return false;
+		this.credit -= points;
+		this.hasBina = true;
+		return true;
+	}
+	
 	public void returnBina() {
 		this.hasBina = false;
 	}
