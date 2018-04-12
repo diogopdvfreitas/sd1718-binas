@@ -153,7 +153,7 @@ public class RentBinaIT extends BaseIT {
 		} catch (AlreadyHasBina_Exception ahbe) {
 			fail(ahbe.getMessage());
 		} catch (InvalidStation_Exception ise) {
-			ise.printStackTrace();
+			fail(ise.getMessage());
 		}
 	}
 	@After
