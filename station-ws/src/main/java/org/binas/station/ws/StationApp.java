@@ -40,8 +40,6 @@ public class StationApp {
 		String uddiURL = null;
 		StationEndpointManager endpoint;
 		
-		int coordinateX, coordinateY, capacity, bonus;
-		
 		if (args.length == 3 || args.length == 7) {
 			uddiURL = args[2];
 			
@@ -64,11 +62,12 @@ public class StationApp {
 
 		System.out.println(StationApp.class.getSimpleName() + " running");
 		
-		System.out.println("=========Station=========");
-		System.out.printf("Coordinates:  (%d, %d)\n", Station.getInstance().getCoordinates().getX(), Station.getInstance().getCoordinates().getY());
-		System.out.println("Capacity:     " + Station.getInstance().getMaxCapacity());
-		System.out.println("Return prize: " + Station.getInstance().getBonus());
-		System.out.println("=========================");
+		System.out.println("\n=========Station=========");
+		System.out.printf("ID:            %s\n", Station.getInstance().getId());
+		System.out.printf("Coordinates:   (%d, %d)\n", Station.getInstance().getCoordinates().getX(), Station.getInstance().getCoordinates().getY());
+		System.out.printf("Capacity:      %d\n", Station.getInstance().getMaxCapacity());
+		System.out.printf("Return prize:  %d\n", Station.getInstance().getBonus());
+		System.out.println("=========================\n");
 
 		// TODO start Web Service
 		try {

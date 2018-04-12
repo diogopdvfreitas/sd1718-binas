@@ -26,7 +26,8 @@ public class BinasApp {
 		BinasManager.getInstance().setStationsNamePattern(stationsNamePattern);
 		BinasManager.getInstance().setVerbose(true);
 
-		// TODO start Web Service
+		BinasManager.getInstance().init(0);
+		
 		try {
 			endpoint.start();
 			endpoint.awaitConnections();

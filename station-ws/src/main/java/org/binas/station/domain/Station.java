@@ -68,6 +68,8 @@ public class Station {
  		
 		totalGets.set(0);
 		totalReturns.set(0);
+		
+		System.out.println("RESET");
 	}
  	
  	public void setId(String id) {
@@ -102,34 +104,34 @@ public class Station {
     }
     
 	public Coordinates getCoordinates() {
-    	return coordinates;
+    		return coordinates;
     }
     
     /** Synchronized locks object before returning max capacity */
     public synchronized int getMaxCapacity() {
-    	return maxCapacity;
+    		return maxCapacity;
     }
     
     public int getTotalGets() {
-    	return totalGets.get();
+    		return totalGets.get();
     }
 
     public int getTotalReturns() {
-    	return totalReturns.get();
+    		return totalReturns.get();
     }
 
     public int getFreeDocks() {
-    	return freeDocks.get();
+    		return freeDocks.get();
     }
     
     /** Synchronized locks object before returning bonus */
     public synchronized int getBonus() {
-    	return bonus;
+    		return bonus;
     }
     
     /** Synchronized locks object before returning available Binas */
     public synchronized int getAvailableBinas() {
-    	return maxCapacity - freeDocks.get();
+    		return maxCapacity - freeDocks.get();
     }
     	
 }

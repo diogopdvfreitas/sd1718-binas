@@ -11,7 +11,6 @@ import org.binas.exception.AlreadyHasBinaException;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
 import org.binas.exception.InvalidEmailException;
-import org.binas.exception.InvalidNumberOfStationsException;
 import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
 import org.binas.exception.NoCreditException;
@@ -40,12 +39,8 @@ public class BinasPortImpl implements BinasPortType {
 	public List<org.binas.ws.StationView> listStations(Integer numberOfStations, CoordinatesView coordinates) {
 		List<org.binas.ws.StationView> stationsList = new ArrayList<org.binas.ws.StationView>();
 		
-		try {
-			for (org.binas.station.ws.StationView sv : binasManager.getNearestStationsList(numberOfStations, coordinates)) {
-				stationsList.add(buildStationView(sv));
-			}
-		} catch (InvalidNumberOfStationsException inse) {
-			throwInvalidNumberOfStations("Number of stations exceeds number of existing stations!");
+		for (org.binas.station.ws.StationView sv : binasManager.getNearestStationsList(numberOfStations, coordinates)) {
+			stationsList.add(buildStationView(sv));
 		}
 		
 		return stationsList;
@@ -54,6 +49,7 @@ public class BinasPortImpl implements BinasPortType {
 	@Override
 	public org.binas.ws.StationView getInfoStation(String stationId) throws InvalidStation_Exception {
 		StationView stationView = null;
+		
 		try {
 			stationView = buildStationView(binasManager.getStationView(stationId));
 		} catch (InvalidStationException ise) {
@@ -64,14 +60,15 @@ public class BinasPortImpl implements BinasPortType {
 	}
 
 	@Override
-	public int getCredit(String email) throws UserNotExists_Exception {	
+	public int getCredit(String email) throws UserNotExists_Exception {
+		int credit = -1;
 		try {
 			User user = this.binasManager.getUser(email);
-			user.getCredit();
+			credit = user.getCredit();
 		} catch (UserNotExistsException une) {
 			throwUserNotExists("There isn't a user with that mail");
 		}
-		return 0;
+		return credit;
 	}
 
 	@Override
@@ -136,8 +133,6 @@ public class BinasPortImpl implements BinasPortType {
 		builder.append(" from ").append(wsName);
 		builder.append('\n');
 		
-		binasManager.getStations();
-		
 		String stationsResponse = binasManager.pingStations(inputMessage);
 		
 		if (stationsResponse.length() == 0) {
@@ -163,8 +158,8 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public void testClear() {
+		BinasManager.getInstance().testClearStations();
 		BinasManager.getInstance().reset();
-		
 	}
 
 	@Override
@@ -251,12 +246,6 @@ public class BinasPortImpl implements BinasPortType {
 		NoCredit faultInfo = new NoCredit();
 		faultInfo.setMessage(message);
 		throw new NoCredit_Exception(message, faultInfo);
-	}
-	
-	private void throwInvalidNumberOfStations(final String message) throws InvalidNumberOfStations_Exception {
-		InvalidNumberOfStations faultInfo = new InvalidNumberOfStations();
-		faultInfo.setMessage(message);
-		throw new InvalidNumberOfStations_Exception(message, faultInfo);
 	}
 	
 }

@@ -23,9 +23,11 @@ public class GetCreditTest extends BaseIT{
 	
 	@Test
 	public void sucess() {
+		int credit;
+		
 		try {
 			UserView userView = client.activateUser(EMAIL);
-			int credit = client.getCredit(EMAIL);
+			credit = client.getCredit(EMAIL);
 			assertEquals(userView.getCredit().intValue(), credit);	
 		} catch (UserNotExists_Exception uee) {
 			fail("User does not exists");

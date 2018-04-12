@@ -16,44 +16,63 @@ import org.junit.Test;
 public class RentBinaIT extends BaseIT {
 	
 	private static final Integer USER_INITIAL_POINTS = 10;
-	private static final String EMAIL1 = "e.1.mail@that.serv1ce.com";
-	private static final String EMAIL2 = "e.2.mail@that.serv1ce.com";
-	private static final String EMAIL3 = "e.3.mail@that.serv1ce.com";
+	private static final String EMAIL = "e.1.mail@that.serv1ce.com";
 	
-	private static final String STATION_ID = "A37_Station1";
+	private static final String STATION1_ID = "A37_Station1";
+	private static final String STATION2_ID = "A37_Station2";
+	private static final String STATION3_ID = "A37_Station3";
 	
-	private int availableBinas;
-	private UserView user1, user2, user3;
+	private static final int X = 0;
+	private static final int Y = 0;
+	private static final int CAPACITY = 10;
+	private static final int BONUS = 2;
+	
+	private int availableBinas1, availableBinas2, availableBinas3;
+	private UserView user;
 
 	@Before
 	public void setUp() throws Exception {
 		client.testInit(USER_INITIAL_POINTS);
-		user1 = client.activateUser(EMAIL1);
-		user2 = client.activateUser(EMAIL2);
-		user3 = client.activateUser(EMAIL3);
-		availableBinas = client.getInfoStation(STATION_ID).getAvailableBinas();
+		
+		user = client.activateUser(EMAIL);
+		
+		client.testInitStation(STATION1_ID, X, Y, CAPACITY, BONUS);
+		client.testInitStation(STATION2_ID, X, Y, CAPACITY, BONUS);
+		client.testInitStation(STATION3_ID, X, Y, CAPACITY, BONUS);
+		
+		availableBinas1 = client.getInfoStation(STATION1_ID).getAvailableBinas();
+		availableBinas2 = client.getInfoStation(STATION2_ID).getAvailableBinas();
+		availableBinas3 = client.getInfoStation(STATION3_ID).getAvailableBinas();
 	}
 
 	@Test
 	public void success() {
-		int availableBinas;
+		int availableBinas1, availableBinas2, availableBinas3;
 		
 		try {
-			client.rentBina(STATION_ID, EMAIL1);
-			availableBinas = client.getInfoStation(STATION_ID).getAvailableBinas();
-			assertEquals(this.availableBinas - 1, availableBinas);
-			assertEquals(user1.getCredit() - 1, client.getCredit(EMAIL1));
+			client.rentBina(STATION1_ID, EMAIL);
+			
+			availableBinas1 = client.getInfoStation(STATION1_ID).getAvailableBinas();
+			availableBinas2 = client.getInfoStation(STATION2_ID).getAvailableBinas();
+			availableBinas3 = client.getInfoStation(STATION3_ID).getAvailableBinas();
+			
+			assertEquals(this.availableBinas1 - 1, availableBinas1);
+			assertEquals(this.availableBinas2, availableBinas2);
+			assertEquals(this.availableBinas3, availableBinas3);
+			
+			assertEquals(user.getCredit() - 1, client.getCredit(EMAIL));
+			
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
 	}
 	
 	@Test(expected = AlreadyHasBina_Exception.class)
-	public void AlreadyHasBina() throws AlreadyHasBina_Exception {
+	public void alreadyHasBina() throws AlreadyHasBina_Exception {
 		
 		try {
-			client.rentBina(STATION_ID, EMAIL1);
-			client.rentBina(STATION_ID, EMAIL1);
+			client.rentBina(STATION1_ID, EMAIL);
+			client.rentBina(STATION1_ID, EMAIL);
 		} catch (NoBinaAvail_Exception nba) {
 			fail(nba.getMessage());
 		} catch (NoCredit_Exception nce) {
