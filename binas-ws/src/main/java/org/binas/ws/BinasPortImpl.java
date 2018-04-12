@@ -10,6 +10,7 @@ import org.binas.domain.User;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
 import org.binas.exception.InvalidEmailException;
+import org.binas.exception.UserNotExistsException;
 import org.binas.ws.BinasPortType;
 
 @WebService(
@@ -47,8 +48,13 @@ public class BinasPortImpl implements BinasPortType {
 	}
 
 	@Override
-	public int getCredit(String email) throws UserNotExists_Exception {
-		// TODO Auto-generated method stub
+	public int getCredit(String email) throws UserNotExists_Exception {	
+		try {
+			User user = this.binasManager.getUser(email);
+			user.getCredit();
+		} catch (UserNotExistsException une) {
+			throwUserNotExists("There isn't a user with that mail");
+		}
 		return 0;
 	}
 
