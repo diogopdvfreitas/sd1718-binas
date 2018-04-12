@@ -12,6 +12,8 @@ import org.junit.Test;
 
 public class ListStationsIT extends BaseIT {
 	
+	private static final Integer USER_INITIAL_POINTS = 10;
+	
 	private static final String STATION_ID = "A37_Station";
 	private static final int X = 0;
 	private static final int Y = 0;
@@ -20,6 +22,7 @@ public class ListStationsIT extends BaseIT {
 	
 	@Before
 	public void setUp() throws Exception {
+		client.testInit(USER_INITIAL_POINTS);
 		for (int i = 1; i < 4; i++) {
 			client.testInitStation(STATION_ID + i, X + (i * 5), Y + (i * 5), CAPACITY, RETURN_PRIZE);
 		}
@@ -35,15 +38,14 @@ public class ListStationsIT extends BaseIT {
 		assertEquals(list.get(0).getCoordinate().getX(), (Integer) 5);
 		assertEquals(list.get(0).getCoordinate().getY(), (Integer) 5);
 		assertEquals(list.get(0).getCapacity(), CAPACITY);
-		assertEquals(list.get(0).getId(), "A37_Station2");
-		assertEquals(list.get(0).getCoordinate().getX(), (Integer) 10);
-		assertEquals(list.get(0).getCoordinate().getY(), (Integer) 10);
-		assertEquals(list.get(0).getCapacity(), CAPACITY);
+		assertEquals(list.get(1).getId(), "A37_Station2");
+		assertEquals(list.get(1).getCoordinate().getX(), (Integer) 10);
+		assertEquals(list.get(1).getCoordinate().getY(), (Integer) 10);
+		assertEquals(list.get(1).getCapacity(), CAPACITY);
 	}
-
-	
 	
 	@After
 	public void tearDown() throws Exception {
+		client.testClear();
 	}
 }

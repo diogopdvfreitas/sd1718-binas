@@ -125,11 +125,7 @@ public class BinasManager {
 	}
 	
 	public synchronized org.binas.station.ws.StationView getStationView(String stationId) throws InvalidStationException {
-		for (StationPortType station : this.stations) {
-			if (station.getInfo().getId().equals(stationId))
-				return station.getInfo();
-		}
-		throw new InvalidStationException();
+		return getStation(stationId).getInfo();
 	}
 	
 	// Setters -------------------------------------------------------------
@@ -284,6 +280,9 @@ public class BinasManager {
 		}
 		
 		stationsList.sort(comparator);
+		
+		if (stationsList.size() < numberOfStations)
+			return stationsList;
 		
 		return stationsList.subList(0, numberOfStations);
 	}

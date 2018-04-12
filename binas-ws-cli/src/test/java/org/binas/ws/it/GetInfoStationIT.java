@@ -10,6 +10,8 @@ import org.binas.ws.StationView;
 
 public class GetInfoStationIT extends BaseIT {
 	
+	private static final Integer USER_INITIAL_POINTS = 10;
+	
 	private static final String STATION_ID = "A37_Station1";
 	private static final int X = 5;
 	private static final int Y = 15;
@@ -18,6 +20,7 @@ public class GetInfoStationIT extends BaseIT {
 
 	@Before
 	public void setUp() throws Exception {
+		client.testInit(USER_INITIAL_POINTS);
 		client.testInitStation(STATION_ID, X, Y, CAPACITY, RETURN_PRIZE);
 	}
 
@@ -29,10 +32,6 @@ public class GetInfoStationIT extends BaseIT {
 			assertEquals(stationView.getCoordinate().getX(), (Integer) X);
 			assertEquals(stationView.getCoordinate().getY(), (Integer) Y);
 			assertEquals(stationView.getCapacity(), CAPACITY);
-			/*assertEquals(stationView.getTotalGets(), 0);
-			assertEquals(stationView.getTotalReturns(), 0);
-			assertEquals(stationView.getAvailableBinas(), );
-			assertEquals(stationView.getFreeDocks(), );*/
 		} catch (InvalidStation_Exception ise) {
 			fail("Invalid Station ID");
 		}
@@ -40,11 +39,7 @@ public class GetInfoStationIT extends BaseIT {
 	
 	@Test(expected = InvalidStation_Exception.class)
 	public void invalidStationId() throws InvalidStation_Exception {
-		try {
-			client.getInfoStation("A37_Station200");
-		} catch (InvalidStation_Exception ise) {
-			fail("Couldn't find a station with that ID!");
-		}
+		client.getInfoStation("A37_Station200");
 	}
 	
 	
