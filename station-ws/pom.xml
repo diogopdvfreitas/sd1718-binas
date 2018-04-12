@@ -29,6 +29,11 @@
 
 		<ws.name>A37_Station${ws.i}</ws.name>
 		<uddi.url>http://localhost:9090</uddi.url>
+		
+		<prop.x></prop.x>
+		<prop.y></prop.y>
+		<prop.capacity></prop.capacity>
+		<prop.bonus></prop.bonus>
 
 	</properties>
 
@@ -106,6 +111,10 @@
 						<argument>${ws.name}</argument>
 						<argument>${ws.url}</argument>
 						<argument>${uddi.url}</argument>
+						<argument>${prop.x}</argument>
+						<argument>${prop.y}</argument>
+						<argument>${prop.capacity}</argument>
+						<argument>${prop.bonus}</argument>
 					</arguments>
 				</configuration>
 			</plugin>

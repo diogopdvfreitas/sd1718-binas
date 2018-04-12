@@ -147,8 +147,11 @@ public class BinasPortImpl implements BinasPortType {
 	@Override
 	public void testInitStation(String stationId, int x, int y, int capacity, int returnPrize)
 			throws org.binas.ws.BadInit_Exception {
-		// TODO Auto-generated method stub
-		
+		try {
+			binasManager.initStation(stationId, x, y, capacity, returnPrize);
+		} catch (BadInitException bie) {
+			throwBadInit("Invalid initialization values!");
+		}
 	}
 
 	@Override

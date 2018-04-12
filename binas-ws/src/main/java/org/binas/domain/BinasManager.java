@@ -26,6 +26,7 @@ import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
 import org.binas.exception.NoCreditException;
 import org.binas.exception.UserNotExistsException;
+import org.binas.station.ws.BadInit_Exception;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
@@ -84,6 +85,19 @@ public class BinasManager {
 		this.userInitialPoints = userInitialPoints;
 		emptyStations();
 		emptyUsers();
+	}
+	
+	public synchronized void initStation(String stationId, int x, int y, int capacity, int returnPrize) throws BadInitException {
+		try {
+			StationPortType station = getStation(stationId);
+			try {
+				station.testInit(x, y, capacity, returnPrize);
+			} catch (BadInit_Exception e) {
+				throw new BadInitException();
+			}
+		} catch (InvalidStationException ise) {
+			throw new BadInitException();
+		}
 	}
 	
 	public synchronized void reset() {
