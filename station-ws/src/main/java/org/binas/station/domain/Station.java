@@ -68,8 +68,6 @@ public class Station {
  		
 		totalGets.set(0);
 		totalReturns.set(0);
-		
-		System.out.println("RESET");
 	}
  	
  	public void setId(String id) {
