@@ -98,7 +98,7 @@ public class Station {
  	}
     
     public String getId() {
-    	return id;
+    		return id;
     }
     
 	public Coordinates getCoordinates() {

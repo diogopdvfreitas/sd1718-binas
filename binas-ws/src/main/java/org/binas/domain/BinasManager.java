@@ -44,13 +44,13 @@ public class BinasManager {
 	
 	private String uddiURL;
 	private String stationsNamePattern;
-	private Collection<StationPortType> stations;
 	private Collection<UDDIRecord> stationsRecord;
 	
 	private static int USER_INITIAL_POINTS_DEFAULT = 10;
 	private int userInitialPoints;
 	
-	private Collection<User> users;
+	private Collection<StationPortType> stations = Collections.synchronizedList(new ArrayList<StationPortType>());
+	private Collection<User> users = Collections.synchronizedSet(new HashSet<User>());
 	
 	private boolean verbose = false;
 
@@ -100,29 +100,36 @@ public class BinasManager {
 		return verbose;
 	}
 	
-	public synchronized Collection<User> getUsers() {
-		return this.users;
+	public Collection<User> getUsers() {
+		synchronized (this.users) {
+			return this.users;			
+		}
 	}
 
-	public synchronized User getUser(String email) throws UserNotExistsException {
-		for(User user : this.users) {
-			if (user.getEmail().equals(email)) {
-				return user;
-			};
-		}
-		
-		throw new UserNotExistsException();
+	public User getUser(String email) throws UserNotExistsException {
+		synchronized (this.users) {
+			for(User user : this.users) {
+				if (user.getEmail().equals(email)) {
+					return user;
+				};
+			}			
+			throw new UserNotExistsException();
+		}		
 	}
 	
-	private synchronized StationPortType getStation(String stationId) throws InvalidStationException {
-		for (StationPortType station : stations) {
-			if (station.getInfo().getId().equals(stationId)) return station;
+	private StationPortType getStation(String stationId) throws InvalidStationException {
+		synchronized (this.stations) {
+			for (StationPortType station : this.stations) {
+				if (station.getInfo().getId().equals(stationId)) return station;
+			}
+			throw new InvalidStationException();			
 		}
-		throw new InvalidStationException();
 	}
 	
-	public synchronized org.binas.station.ws.StationView getStationView(String stationId) throws InvalidStationException {
-		return getStation(stationId).getInfo();
+	public org.binas.station.ws.StationView getStationView(String stationId) throws InvalidStationException {
+		synchronized (this.stations) {
+			return getStation(stationId).getInfo();			
+		}
 	}
 	
 	// Setters -------------------------------------------------------------
@@ -150,7 +157,8 @@ public class BinasManager {
 		registerStations();
 	}
 	
-	public synchronized void initStation(String stationId, int x, int y, int capacity, int returnPrize) throws BadInitException, InvalidStationException {
+	public synchronized void initStation(String stationId, int x, int y, int capacity, int returnPrize) throws BadInitException,
+		InvalidStationException {
 		try {
 			StationPortType station = getStation(stationId);
 			station.testInit(x, y, capacity, returnPrize);
@@ -168,48 +176,58 @@ public class BinasManager {
 	}
 	
 	public synchronized void testClearStations() {
-		for (StationPortType station : stations) {
+		for (StationPortType station : this.stations) {
 			station.testClear();
 		}
 	}
 	
 	// Manager logic  ---------------------------------------------------------
 	
-	public synchronized User createAndAddUser(String email) throws EmailExistsException, InvalidEmailException {
-		User user = new User(email, userInitialPoints);
+	public User createAndAddUser(String email) throws EmailExistsException, InvalidEmailException {
+		User user = new User(email, this.userInitialPoints);
 		
-		if (!this.users.add(user)) {
-			throw new EmailExistsException();
-		};
-		
-		return user;
+		synchronized (this.users) {
+			if (!this.users.add(user)) {
+				throw new EmailExistsException();
+			};
+			
+			return user;			
+		}
 	}
 
 	public void registerStations() {
-		emptyStations();
-		
-		if (verbose)
-			System.out.printf("Contacting UDDI at %s%n", uddiURL);	
-		try {
-			uddiLookup();
-			createStub();
-		} catch (UDDINamingException une) {
-			System.out.printf("Error contacting the stations: %s%n", une);
+		synchronized (this.stations) {
+			emptyStations();
+			
+			if (verbose)
+				System.out.printf("Contacting UDDI at %s%n", uddiURL);	
+			try {
+				uddiLookup();
+				createStub();
+			} catch (UDDINamingException une) {
+				System.out.printf("Error contacting the stations: %s%n", une);
+			}			
 		}
 	}
 	
-	public synchronized void emptyStations() {
-		this.stations = Collections.synchronizedList(new ArrayList<StationPortType>());
+	public void emptyStations() {
+		synchronized (this.stations) {
+			this.stations = Collections.synchronizedList(new ArrayList<StationPortType>());			
+		}
 	}
 	
-	public synchronized void emptyUsers() {
-		this.users = Collections.synchronizedSet(new HashSet<User>());
+	public void emptyUsers() {
+		synchronized (this.users) {
+			this.users = Collections.synchronizedSet(new HashSet<User>());			
+		}
 	}
 	
-	public synchronized void removeUser(String email) throws UserNotExistsException {
-		User user = getUser(email);
-		if (user != null) {
-			this.users.remove(user);			
+	public void removeUser(String email) throws UserNotExistsException {
+		synchronized (this.users) {
+			User user = getUser(email);
+			if (user != null) {
+				this.users.remove(user);			
+			}			
 		}
 	}
 	
@@ -217,10 +235,14 @@ public class BinasManager {
 	
 	public String pingStations(String inputMessage) {
 		StringBuilder builder = new StringBuilder();
-		for(StationPortType s : this.stations) {
-			builder.append(s.testPing(inputMessage));
-			builder.append("\n");
+		
+		synchronized (this.stations) {
+			for(StationPortType s : this.stations) {
+				builder.append(s.testPing(inputMessage));
+				builder.append("\n");
+			}			
 		}
+		
 		return builder.toString();
 	}
 	
@@ -259,10 +281,11 @@ public class BinasManager {
 		} catch(NoSlotAvail_Exception nsae) { throw new FullStationException(); }		
 	}
 	
-	public synchronized List<org.binas.station.ws.StationView> getNearestStationsList(Integer numberOfStations, CoordinatesView coordinates) {
+	public List<org.binas.station.ws.StationView> getNearestStationsList(Integer numberOfStations, CoordinatesView coordinates) {
 		List<org.binas.station.ws.StationView> stationsList = new ArrayList<org.binas.station.ws.StationView>();
-		
+
 		// always looks for new stations
+		// this method already gets the mutex for the stations
 		registerStations();
 		
 		Integer xO = coordinates.getX(); Integer yO = coordinates.getY();
@@ -279,8 +302,12 @@ public class BinasManager {
 			}
 		};
 		
-		for (StationPortType station : this.stations) {
-			stationsList.add(station.getInfo());
+		// get the mutex on this block, only to make sure that the stations
+		// that are being contacted do not change during the iteration
+		synchronized (this.stations) {
+			for (StationPortType station : this.stations) {
+				stationsList.add(station.getInfo());
+			}			
 		}
 		
 		stationsList.sort(comparator);
