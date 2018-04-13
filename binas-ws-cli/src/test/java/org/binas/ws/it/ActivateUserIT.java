@@ -38,7 +38,7 @@ public class ActivateUserIT extends BaseIT {
 	}
 	
 	@Test(expected = EmailExists_Exception.class)
-	public void EmailExists() throws EmailExists_Exception {
+	public void emailExists() throws EmailExists_Exception {
 		try {
 			client.activateUser(EMAIL);
 			client.activateUser(EMAIL);			
@@ -48,14 +48,14 @@ public class ActivateUserIT extends BaseIT {
 	}
 	
 	@Test
-	public void InvalidEmail() {
+	public void invalidEmailFormat() {
 		int invalidEmails = 0;
 		
 		for (String email : invalidEmailExamples) {
 			try {
 				client.activateUser(email);
 			} catch (EmailExists_Exception eee) {
-				fail("Invalid email format error");
+				fail("Invalid duplicated user error");
 			} catch (InvalidEmail_Exception iee) {
 				// record it and proceed
 				invalidEmails++;
@@ -63,6 +63,11 @@ public class ActivateUserIT extends BaseIT {
 		}
 		
 		assertEquals(invalidEmails, invalidEmailExamples.length);
+	}
+	
+	@Test(expected = InvalidEmail_Exception.class)
+	public void nullEmail() throws EmailExists_Exception, InvalidEmail_Exception {
+		client.activateUser(null);
 	}
 
 	@After

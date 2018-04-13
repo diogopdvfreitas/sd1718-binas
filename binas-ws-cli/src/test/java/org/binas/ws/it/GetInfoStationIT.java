@@ -54,6 +54,16 @@ public class GetInfoStationIT extends BaseIT {
 		client.getInfoStation("A37_Station200");
 	}
 	
+	@Test(expected = InvalidStation_Exception.class)
+	public void nullStationId() throws InvalidStation_Exception {
+		client.getInfoStation(null);
+	}
+	
+	@Test(expected = InvalidStation_Exception.class)
+	public void emptyStationId() throws InvalidStation_Exception {
+		client.getInfoStation("");
+	}
+	
 	@After
 	public void tearDown() throws Exception {
 		client.testClear();

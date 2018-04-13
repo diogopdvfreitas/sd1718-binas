@@ -50,6 +50,16 @@ public class GetCreditIT extends BaseIT{
 		}
 	}
 	
+	@Test(expected = InvalidEmail_Exception.class)
+	public void nullEmail() throws EmailExists_Exception, InvalidEmail_Exception {
+		client.activateUser(null);
+	}
+	
+	@Test(expected = InvalidEmail_Exception.class)
+	public void invalidEmail() throws EmailExists_Exception, InvalidEmail_Exception {
+		client.activateUser("");
+	}
+	
 	@After
 	public void tearDown() throws Exception {
 		client.testClear();

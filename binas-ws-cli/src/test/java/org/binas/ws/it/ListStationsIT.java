@@ -67,6 +67,24 @@ public class ListStationsIT extends BaseIT {
 		assertEquals(list.get(2).getCapacity(), CAPACITY2);
 	}
 	
+	@Test
+	public void successWithNegativeNumberOfStationsRequested() {
+		CoordinatesView cv = new CoordinatesView();
+		cv.setX(0); cv.setY(0);
+		
+		List<StationView> list = client.listStations(-1, cv);
+		assertEquals(list.size(), 0);
+	}
+	
+	@Test
+	public void successWithZeroNumberOfStationsRequested() {
+		CoordinatesView cv = new CoordinatesView();
+		cv.setX(0); cv.setY(0);
+		
+		List<StationView> list = client.listStations(0, cv);
+		assertEquals(list.size(), 0);
+	}
+	
 	@After
 	public void tearDown() throws Exception {
 		client.testClear();

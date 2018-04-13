@@ -130,11 +130,63 @@ public class ReturnBinaIT extends BaseIT {
 			fail(nce.getMessage());
 		}
 	}
+
+	@Test(expected = UserNotExists_Exception.class)
+	public void nullUser() throws UserNotExists_Exception {
+		try {
+			client.returnBina(STATION1_ID, null);
+		} catch (FullStation_Exception fse) {
+			fail(fse.getMessage());
+		} catch (InvalidStation_Exception ise) {
+			fail(ise.getMessage());
+		}  catch (NoBinaRented_Exception nce) {
+			fail(nce.getMessage());
+		}
+	}
+
+	@Test(expected = UserNotExists_Exception.class)
+	public void emptyUser() throws UserNotExists_Exception {
+		try {
+			client.returnBina(STATION1_ID, "");
+		} catch (FullStation_Exception fse) {
+			fail(fse.getMessage());
+		} catch (InvalidStation_Exception ise) {
+			fail(ise.getMessage());
+		}  catch (NoBinaRented_Exception nce) {
+			fail(nce.getMessage());
+		}
+	}
 	
 	@Test(expected = InvalidStation_Exception.class)
 	public void invalidStation() throws InvalidStation_Exception {
 		try {
 			client.returnBina("example of invalid bina", EMAIL);
+		} catch (FullStation_Exception fse) {
+			fail(fse.getMessage());
+		} catch (UserNotExists_Exception unee) {
+			fail(unee.getMessage());
+		} catch (NoBinaRented_Exception nce) {
+			fail(nce.getMessage());
+		}
+	}
+
+	@Test(expected = InvalidStation_Exception.class)
+	public void nullStation() throws InvalidStation_Exception {
+		try {
+			client.returnBina(null, EMAIL);
+		} catch (FullStation_Exception fse) {
+			fail(fse.getMessage());
+		} catch (UserNotExists_Exception unee) {
+			fail(unee.getMessage());
+		} catch (NoBinaRented_Exception nce) {
+			fail(nce.getMessage());
+		}
+	}
+
+	@Test(expected = InvalidStation_Exception.class)
+	public void emptyStation() throws InvalidStation_Exception {
+		try {
+			client.returnBina("", EMAIL);
 		} catch (FullStation_Exception fse) {
 			fail(fse.getMessage());
 		} catch (UserNotExists_Exception unee) {

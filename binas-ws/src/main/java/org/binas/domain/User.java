@@ -10,6 +10,8 @@ public class User {
 	private Boolean hasBina;
 	private Integer credit;
 	
+	private static final Pattern EMAIL_PATTERN = Pattern.compile("^(\\p{Alnum}+\\.?)+@(\\p{Alnum}+\\.?)+$");
+	
 	public User(String email) throws InvalidEmailException {
 		checkEmail(email);
 		this.email = email;
@@ -24,13 +26,14 @@ public class User {
 		this.hasBina = false;
 	}
 	
-	public void checkEmail(String email) throws InvalidEmailException {
-		 Pattern p = Pattern.compile("^(\\p{Alnum}+\\.?)+@(\\p{Alnum}+\\.?)+$");
-		 Matcher m = p.matcher(email);
+	public static void checkEmail(String email) throws InvalidEmailException {
+		if (email == null) throw new InvalidEmailException("Invalid email");
+		
+		Matcher m = EMAIL_PATTERN.matcher(email);
 		 
-		 if (!m.matches()) {
-			 throw new InvalidEmailException("Invalid email: " +  email);
-		 }
+		if (!m.matches()) {
+			throw new InvalidEmailException("Invalid email format: " +  email);
+		}
 	}
 	
 	public Integer getCredit() {

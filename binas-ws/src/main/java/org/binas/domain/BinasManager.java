@@ -107,6 +107,12 @@ public class BinasManager {
 	}
 
 	public User getUser(String email) throws UserNotExistsException {
+		try {
+			User.checkEmail(email);
+		} catch (InvalidEmailException iee) {
+			throw new UserNotExistsException();
+		}
+		
 		synchronized (this.users) {
 			for(User user : this.users) {
 				if (user.getEmail().equals(email)) {
@@ -118,6 +124,8 @@ public class BinasManager {
 	}
 	
 	private StationPortType getStation(String stationId) throws InvalidStationException {
+		if (stationId == null || stationId.length() == 0) throw new InvalidStationException();
+		
 		synchronized (this.stations) {
 			for (StationPortType station : this.stations) {
 				if (station.getInfo().getId().equals(stationId)) return station;
@@ -222,7 +230,7 @@ public class BinasManager {
 		}
 	}
 	
-	public void removeUser(String email) throws UserNotExistsException {
+	public void removeUser(String email) throws UserNotExistsException, InvalidEmailException {
 		synchronized (this.users) {
 			User user = getUser(email);
 			if (user != null) {
@@ -283,6 +291,8 @@ public class BinasManager {
 	
 	public List<org.binas.station.ws.StationView> getNearestStationsList(Integer numberOfStations, CoordinatesView coordinates) {
 		List<org.binas.station.ws.StationView> stationsList = new ArrayList<org.binas.station.ws.StationView>();
+		
+		if (numberOfStations <= 0) return stationsList;
 
 		// always looks for new stations
 		// this method already gets the mutex for the stations

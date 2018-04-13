@@ -85,7 +85,7 @@ public class BinasPortImpl implements BinasPortType {
 		} catch (EmailExistsException eee) {
 			throwEmailExists("There's already a user registered with this email");
 		} catch (InvalidEmailException iee) {
-			throwInvalidEmail("Invalid email: " + email);
+			throwInvalidEmail(iee.getMessage());
 		}
 
 		return userView;
