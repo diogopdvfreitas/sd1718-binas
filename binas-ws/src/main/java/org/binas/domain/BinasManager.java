@@ -33,10 +33,6 @@ import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 import org.binas.station.ws.StationView;
 import org.binas.ws.CoordinatesView;
-import org.binas.ws.FullStation_Exception;
-import org.binas.ws.InvalidStation_Exception;
-import org.binas.ws.NoBinaRented_Exception;
-import org.binas.ws.UserNotExists_Exception;
 
 public class BinasManager {
 

@@ -2,11 +2,7 @@ package org.binas.ws.it;
 
 import static org.junit.Assert.*;
 
-import org.binas.ws.AlreadyHasBina_Exception;
-import org.binas.ws.BadInit_Exception;
-import org.binas.ws.EmailExists_Exception;
 import org.binas.ws.FullStation_Exception;
-import org.binas.ws.InvalidEmail_Exception;
 import org.binas.ws.InvalidStation_Exception;
 import org.binas.ws.NoBinaRented_Exception;
 import org.binas.ws.UserNotExists_Exception;
