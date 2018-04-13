@@ -42,7 +42,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 
 	@Test
-	public void success() {
+	public void successRentingInOneStation() {
 		int availableBinas1, availableBinas2, availableBinas3;
 		
 		try {
@@ -59,6 +59,59 @@ public class ReturnBinaIT extends BaseIT {
 			assertEquals(userA.getCredit() - 1 + BONUS1, client.getCredit(EMAIL));
 			assertEquals(userB.getCredit() - 1, client.getCredit(EMAIL2));
 			assertEquals(userC.getCredit().intValue(), client.getCredit(EMAIL3));
+			
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+	}
+	
+	@Test
+	public void successRentingInTwoStation() {
+		int availableBinas1, availableBinas2, availableBinas3;
+		
+		try {
+			client.returnBina(STATION1_ID, EMAIL);
+			client.returnBina(STATION2_ID, EMAIL2);
+			
+			availableBinas1 = client.getInfoStation(STATION1_ID).getAvailableBinas();
+			availableBinas2 = client.getInfoStation(STATION2_ID).getAvailableBinas();
+			availableBinas3 = client.getInfoStation(STATION3_ID).getAvailableBinas();
+			
+			assertEquals(this.availableBinas1 + 1, availableBinas1);
+			assertEquals(this.availableBinas2 + 1, availableBinas2);
+			assertEquals(this.availableBinas3, availableBinas3);
+			
+			assertEquals(userA.getCredit() - 1 + BONUS1, client.getCredit(EMAIL));
+			assertEquals(userB.getCredit() - 1 + BONUS2, client.getCredit(EMAIL2));
+			assertEquals(userC.getCredit().intValue(), client.getCredit(EMAIL3));
+			
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+	}
+	
+	@Test
+	public void successRentingInThreeStation() {
+		int availableBinas1, availableBinas2, availableBinas3;
+		
+		try {
+			client.rentBina(STATION3_ID, EMAIL3);
+			
+			client.returnBina(STATION1_ID, EMAIL);
+			client.returnBina(STATION2_ID, EMAIL2);
+			client.returnBina(STATION3_ID, EMAIL3);
+			
+			availableBinas1 = client.getInfoStation(STATION1_ID).getAvailableBinas();
+			availableBinas2 = client.getInfoStation(STATION2_ID).getAvailableBinas();
+			availableBinas3 = client.getInfoStation(STATION3_ID).getAvailableBinas();
+			
+			assertEquals(this.availableBinas1 + 1, availableBinas1);
+			assertEquals(this.availableBinas2 + 1, availableBinas2);
+			assertEquals(this.availableBinas3, availableBinas3);
+			
+			assertEquals(userA.getCredit() - 1 + BONUS1, client.getCredit(EMAIL));
+			assertEquals(userB.getCredit() - 1 + BONUS2, client.getCredit(EMAIL2));
+			assertEquals(userC.getCredit() - 1 + BONUS3, client.getCredit(EMAIL3));
 			
 		} catch (Exception e) {
 			fail(e.getMessage());
