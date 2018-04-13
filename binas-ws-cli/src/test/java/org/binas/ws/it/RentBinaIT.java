@@ -145,7 +145,7 @@ public class RentBinaIT extends BaseIT {
 	@Test(expected = UserNotExists_Exception.class)
 	public void userNotExists() throws UserNotExists_Exception {
 		try {
-			client.rentBina(STATION1_ID, "invalid email");
+			client.rentBina(STATION1_ID, "invalid@email");
 		} catch (NoBinaAvail_Exception nba) {
 			fail(nba.getMessage());
 		} catch (NoCredit_Exception nce) {

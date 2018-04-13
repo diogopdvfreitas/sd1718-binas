@@ -5,10 +5,10 @@ import static org.junit.Assert.*;
 import org.binas.ws.AlreadyHasBina_Exception;
 import org.binas.ws.BadInit_Exception;
 import org.binas.ws.EmailExists_Exception;
+import org.binas.ws.FullStation_Exception;
 import org.binas.ws.InvalidEmail_Exception;
 import org.binas.ws.InvalidStation_Exception;
-import org.binas.ws.NoBinaAvail_Exception;
-import org.binas.ws.NoCredit_Exception;
+import org.binas.ws.NoBinaRented_Exception;
 import org.binas.ws.UserNotExists_Exception;
 import org.binas.ws.UserView;
 import org.junit.After;
@@ -20,6 +20,7 @@ public class ReturnBinaIT extends BaseIT {
 	private static final Integer USER_INITIAL_POINTS = 10;
 	private static final String EMAIL = "e.1.mail@that.serv1ce.com";
 	private static final String EMAIL2 = "e.2.mail@that.serv1ce.com";
+	private static final String EMAIL3 = "e.3.mail@that.serv1ce.com";
 	
 	private static final String STATION1_ID = "A37_Station1";
 	private static final String STATION2_ID = "A37_Station2";
@@ -31,7 +32,7 @@ public class ReturnBinaIT extends BaseIT {
 	private static final int BONUS = 2;
 	
 	private int availableBinas1, availableBinas2, availableBinas3;
-	private UserView userA, userB;
+	private UserView userA, userB, userC;
 
 	@Before
 	public void setUp() throws Exception {
@@ -39,6 +40,7 @@ public class ReturnBinaIT extends BaseIT {
 		
 		userA = client.activateUser(EMAIL);
 		userB = client.activateUser(EMAIL2);
+		userC = client.activateUser(EMAIL3);
 		
 		client.testInitStation(STATION1_ID, X, Y, CAPACITY, BONUS);
 		client.testInitStation(STATION2_ID, X, Y, CAPACITY, BONUS);
@@ -69,99 +71,65 @@ public class ReturnBinaIT extends BaseIT {
 			
 			assertEquals(userA.getCredit() - 1 + BONUS, client.getCredit(EMAIL));
 			assertEquals(userB.getCredit() - 1, client.getCredit(EMAIL2));
+			assertEquals(userC.getCredit().intValue(), client.getCredit(EMAIL3));
 			
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
 	}
-	/*
-	@Test(expected = AlreadyHasBina_Exception.class)
-	public void alreadyHasBina() throws AlreadyHasBina_Exception {
+	
+	@Test(expected = UserNotExists_Exception.class)
+	public void userNotExists() throws UserNotExists_Exception {
 		try {
-			client.rentBina(STATION1_ID, EMAIL);
-			client.rentBina(STATION1_ID, EMAIL);
-		} catch (NoBinaAvail_Exception nba) {
-			fail(nba.getMessage());
-		} catch (NoCredit_Exception nce) {
+			client.returnBina(STATION1_ID, "invalid@email");
+		} catch (FullStation_Exception fse) {
+			fail(fse.getMessage());
+		} catch (InvalidStation_Exception ise) {
+			fail(ise.getMessage());
+		}  catch (NoBinaRented_Exception nce) {
 			fail(nce.getMessage());
-		} catch (UserNotExists_Exception unee) {
-			fail(unee.getMessage());
-		} catch (InvalidStation_Exception iee) {
-			fail(iee.getMessage());
 		}
 	}
 	
 	@Test(expected = InvalidStation_Exception.class)
 	public void invalidStation() throws InvalidStation_Exception {
 		try {
-			client.rentBina("example of invalid bina", EMAIL);
-		} catch (NoBinaAvail_Exception nba) {
-			fail(nba.getMessage());
-		} catch (NoCredit_Exception nce) {
-			fail(nce.getMessage());
+			client.returnBina("example of invalid bina", EMAIL);
+		} catch (FullStation_Exception fse) {
+			fail(fse.getMessage());
 		} catch (UserNotExists_Exception unee) {
 			fail(unee.getMessage());
-		} catch (AlreadyHasBina_Exception ahbe) {
-			fail(ahbe.getMessage());
+		} catch (NoBinaRented_Exception nce) {
+			fail(nce.getMessage());
 		}
 	}
-
-	@Test(expected = NoBinaAvail_Exception.class)
-	public void noBinasAvailable() throws NoBinaAvail_Exception {
+	
+	@Test(expected = FullStation_Exception.class)
+	public void fullStation() throws FullStation_Exception {
 		try {
-			client.testInitStation(STATION1_ID, X, Y, 0, BONUS);
-			client.rentBina(STATION1_ID, EMAIL);
-		} catch (NoCredit_Exception nce) {
-			fail(nce.getMessage());
-		} catch (UserNotExists_Exception unee) {
-			fail(unee.getMessage());
-		} catch (AlreadyHasBina_Exception ahbe) {
-			fail(ahbe.getMessage());
+			client.returnBina(STATION3_ID, EMAIL);
 		} catch (InvalidStation_Exception ise) {
 			fail(ise.getMessage());
-		} catch (BadInit_Exception bie) {
-			fail(bie.getMessage());
-		}
-	}
-
-	@Test(expected = NoCredit_Exception.class)
-	public void noCredit() throws NoCredit_Exception {		
-		try {
-			client.testInit(0);
-			client.activateUser(EMAIL2);
-			client.rentBina(STATION1_ID, EMAIL2);
-		} catch (NoBinaAvail_Exception nba) {
-			fail(nba.getMessage());
 		} catch (UserNotExists_Exception unee) {
 			fail(unee.getMessage());
-		} catch (AlreadyHasBina_Exception ahbe) {
-			fail(ahbe.getMessage());
+		} catch (NoBinaRented_Exception nce) {
+			fail(nce.getMessage());
+		}
+	}
+	
+	@Test(expected = NoBinaRented_Exception.class)
+	public void noBinaRented() throws NoBinaRented_Exception {
+		try {
+			client.returnBina(STATION1_ID, EMAIL3);
 		} catch (InvalidStation_Exception ise) {
 			fail(ise.getMessage());
-		} catch (BadInit_Exception bie) {
-			fail(bie.getMessage());
-		} catch (EmailExists_Exception eee) {
-			fail(eee.getMessage());
-		} catch (InvalidEmail_Exception iee) {
-			fail(iee.getMessage());
+		} catch (UserNotExists_Exception unee) {
+			fail(unee.getMessage());
+		} catch (FullStation_Exception fse) {
+			fail(fse.getMessage());
 		}
 	}
-
-	@Test(expected = UserNotExists_Exception.class)
-	public void userNotExists() throws UserNotExists_Exception {
-		try {
-			client.rentBina(STATION1_ID, "invalid email");
-		} catch (NoBinaAvail_Exception nba) {
-			fail(nba.getMessage());
-		} catch (NoCredit_Exception nce) {
-			fail(nce.getMessage());
-		} catch (AlreadyHasBina_Exception ahbe) {
-			fail(ahbe.getMessage());
-		} catch (InvalidStation_Exception ise) {
-			ise.printStackTrace();
-		}
-	}
-	*/
+	
 	@After
 	public void tearDown() throws Exception {
 		client.testClear();
