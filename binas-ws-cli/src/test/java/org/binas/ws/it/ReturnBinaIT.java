@@ -18,15 +18,6 @@ public class ReturnBinaIT extends BaseIT {
 	private static final String EMAIL2 = "e.2.mail@that.serv1ce.com";
 	private static final String EMAIL3 = "e.3.mail@that.serv1ce.com";
 	
-	private static final String STATION1_ID = "A37_Station1";
-	private static final String STATION2_ID = "A37_Station2";
-	private static final String STATION3_ID = "A37_Station3";
-	
-	private static final int X = 0;
-	private static final int Y = 0;
-	private static final int CAPACITY = 10;
-	private static final int BONUS = 2;
-	
 	private int availableBinas1, availableBinas2, availableBinas3;
 	private UserView userA, userB, userC;
 
@@ -38,9 +29,9 @@ public class ReturnBinaIT extends BaseIT {
 		userB = client.activateUser(EMAIL2);
 		userC = client.activateUser(EMAIL3);
 		
-		client.testInitStation(STATION1_ID, X, Y, CAPACITY, BONUS);
-		client.testInitStation(STATION2_ID, X, Y, CAPACITY, BONUS);
-		client.testInitStation(STATION3_ID, X, Y, CAPACITY, BONUS);
+		client.testInitStation(STATION1_ID, X1, Y1, CAPACITY1, BONUS1);
+		client.testInitStation(STATION2_ID, X2, Y2, CAPACITY2, BONUS2);
+		client.testInitStation(STATION3_ID, X3, Y3, CAPACITY3, BONUS3);
 		
 		client.rentBina(STATION1_ID, EMAIL);
 		client.rentBina(STATION2_ID, EMAIL2);
@@ -65,7 +56,7 @@ public class ReturnBinaIT extends BaseIT {
 			assertEquals(this.availableBinas2, availableBinas2);
 			assertEquals(this.availableBinas3, availableBinas3);
 			
-			assertEquals(userA.getCredit() - 1 + BONUS, client.getCredit(EMAIL));
+			assertEquals(userA.getCredit() - 1 + BONUS1, client.getCredit(EMAIL));
 			assertEquals(userB.getCredit() - 1, client.getCredit(EMAIL2));
 			assertEquals(userC.getCredit().intValue(), client.getCredit(EMAIL3));
 			
