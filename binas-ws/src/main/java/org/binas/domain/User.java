@@ -87,7 +87,6 @@ public class User {
 		if (getClass() != obj.getClass())
 			return false;
 		User other = (User) obj;
-		System.out.println("Comparing " + this.email + " with " + other.getEmail());
 		return other.getEmail().equals(this.email);
 	}
 	

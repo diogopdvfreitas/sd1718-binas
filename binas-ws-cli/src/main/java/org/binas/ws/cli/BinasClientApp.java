@@ -44,6 +44,14 @@ public class BinasClientApp {
 		System.out.println(BinasClientApp.class.getSimpleName() + " running");
 		
 		System.out.println(client.testPing("Eu sou o cliente!"));
+		 
+		
+		try {
+			client.activateUser("e@email.com");
+			System.out.print("My credit=" + client.getCredit("e@email.com"));			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}		
 	 }
 }
 

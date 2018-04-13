@@ -25,8 +25,7 @@ public class BinasApp {
 		BinasManager.getInstance().setUddiUrl(uddiURL);
 		BinasManager.getInstance().setStationsNamePattern(stationsNamePattern);
 		BinasManager.getInstance().setVerbose(true);
-
-		BinasManager.getInstance().init(0);
+		BinasManager.getInstance().registerStations();
 		
 		try {
 			endpoint.start();

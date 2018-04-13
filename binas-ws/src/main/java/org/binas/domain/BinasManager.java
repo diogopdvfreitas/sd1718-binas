@@ -47,6 +47,7 @@ public class BinasManager {
 	private Collection<StationPortType> stations;
 	private Collection<UDDIRecord> stationsRecord;
 	
+	private static int USER_INITIAL_POINTS_DEFAULT = 10;
 	private int userInitialPoints;
 	
 	private Collection<User> users;
@@ -163,6 +164,7 @@ public class BinasManager {
 	public synchronized void reset() {
 		emptyStations();
 		emptyUsers();
+		this.userInitialPoints = USER_INITIAL_POINTS_DEFAULT;
 	}
 	
 	public synchronized void testClearStations() {
@@ -184,6 +186,8 @@ public class BinasManager {
 	}
 
 	public void registerStations() {
+		emptyStations();
+		
 		if (verbose)
 			System.out.printf("Contacting UDDI at %s%n", uddiURL);	
 		try {
@@ -257,6 +261,10 @@ public class BinasManager {
 	
 	public synchronized List<org.binas.station.ws.StationView> getNearestStationsList(Integer numberOfStations, CoordinatesView coordinates) {
 		List<org.binas.station.ws.StationView> stationsList = new ArrayList<org.binas.station.ws.StationView>();
+		
+		// always looks for new stations
+		registerStations();
+		
 		Integer xO = coordinates.getX(); Integer yO = coordinates.getY();
 		Comparator<StationView> comparator = new Comparator<StationView>() {
 			@Override
