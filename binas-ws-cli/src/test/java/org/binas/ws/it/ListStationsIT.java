@@ -43,7 +43,7 @@ public class ListStationsIT extends BaseIT {
 	}
 	
 	@Test
-	public void successWithRequestesNumberOfStationsBiggerThanExistingStations() {
+	public void successWithNumberOfStationsRequestedBiggerThanExistingStations() {
 		CoordinatesView cv = new CoordinatesView();
 		cv.setX(0); cv.setY(0);
 		
