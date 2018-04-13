@@ -23,7 +23,6 @@ public class ActivateUserIT extends BaseIT {
 		client.testInit(USER_INITIAL_POINTS);
 	}
 
-
 	@Test
 	public void success() {
 		try {
