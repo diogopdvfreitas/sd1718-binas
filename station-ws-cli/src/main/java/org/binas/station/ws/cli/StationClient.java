@@ -8,6 +8,7 @@ import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 import org.binas.station.ws.StationView;
+import org.binas.station.ws.UserReplicView;
 
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
@@ -101,6 +102,16 @@ public class StationClient implements StationPortType {
 
 	// remote invocation methods ----------------------------------------------
 
+	@Override
+	public UserReplicView getBalance(String email) {
+		return port.getBalance(email);
+	}
+
+	@Override
+	public void setBalance(String email, UserReplicView userReplic) {
+		port.setBalance(email, userReplic);
+	}
+	
 	@Override
 	public StationView getInfo() {
 		return port.getInfo();

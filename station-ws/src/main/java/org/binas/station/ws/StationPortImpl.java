@@ -4,6 +4,7 @@ import javax.jws.WebService;
 
 import org.binas.station.domain.Coordinates;
 import org.binas.station.domain.Station;
+import org.binas.station.domain.UserReplic;
 import org.binas.station.domain.exception.BadInitException;
 import org.binas.station.domain.exception.NoBinaAvailException;
 import org.binas.station.domain.exception.NoSlotAvailException;
@@ -64,6 +65,18 @@ public class StationPortImpl implements StationPortType {
 			throwNoBinaAvail("No Binas available");
 		}
 	}
+	
+	@Override
+	public UserReplicView getBalance(String email) {
+		UserReplic userReplic = station.getBalance(email);
+		return buildUserReplicView(userReplic);
+	}
+	
+	@Override
+	public void setBalance(String email, UserReplicView userReplic) {
+		station.setBalance(email, userReplic);
+		
+	}
 
 	// Test Control operations -----------------------------------------------
 
@@ -104,18 +117,32 @@ public class StationPortImpl implements StationPortType {
 	}
 
 	// View helpers----------------------------------------------------------
+	
+	private UserReplicView buildUserReplicView(UserReplic userReplic) {
+		UserReplicView view = new UserReplicView();
+		
+		synchronized (userReplic) {
+			view.setBalance(userReplic.getBalance());
+			view.setEmail(userReplic.getEmail());			
+		}
+		
+		return view;
+	}
 
 	/** Helper to convert a domain station to a view. */
 	private StationView buildStationView(Station station) {
-		// TODO check sync
 		StationView view = new StationView();
-		view.setId(station.getId());
-		view.setCoordinate(buildCoordinatesView(station.getCoordinates()));
-		view.setCapacity(station.getMaxCapacity());
-		view.setTotalGets(station.getTotalGets());
-		view.setTotalReturns(station.getTotalReturns());
-		view.setFreeDocks(station.getFreeDocks());
-		view.setAvailableBinas(station.getAvailableBinas());
+		
+		synchronized (station) {
+			view.setId(station.getId());
+			view.setCoordinate(buildCoordinatesView(station.getCoordinates()));
+			view.setCapacity(station.getMaxCapacity());
+			view.setTotalGets(station.getTotalGets());
+			view.setTotalReturns(station.getTotalReturns());
+			view.setFreeDocks(station.getFreeDocks());
+			view.setAvailableBinas(station.getAvailableBinas());			
+		}
+		
 		return view;
 	}
 

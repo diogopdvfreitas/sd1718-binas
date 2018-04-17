@@ -1,10 +1,12 @@
 package org.binas.station.domain;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.binas.station.domain.exception.BadInitException;
 import org.binas.station.domain.exception.NoBinaAvailException;
 import org.binas.station.domain.exception.NoSlotAvailException;
+import org.binas.station.ws.UserReplicView;
 
 /** Domain Root. */
 public class Station {
@@ -33,6 +35,8 @@ public class Station {
     private AtomicInteger totalReturns = new AtomicInteger(0);
     /** Global with current number of free docks. Uses lock-free thread-safe single variable. */
     private AtomicInteger freeDocks = new AtomicInteger(0);
+    
+    private ConcurrentHashMap<String, UserReplic> userReplics = new ConcurrentHashMap<String, UserReplic>();
 
     // Singleton -------------------------------------------------------------
 
@@ -68,6 +72,8 @@ public class Station {
  		
 		totalGets.set(0);
 		totalReturns.set(0);
+		
+		userReplics.clear();
 	}
  	
  	public void setId(String id) {
@@ -89,6 +95,17 @@ public class Station {
 			throw new NoBinaAvailException();
 		freeDocks.incrementAndGet();
 		totalGets.incrementAndGet();
+	}
+	
+	public UserReplic getBalance(String email) {
+		UserReplic userReplic = getUserReplic(email);
+		return userReplic;
+	}
+	
+	public void setBalance(String email, UserReplicView userReplicView) {
+		UserReplic userReplic = new UserReplic(userReplicView.getEmail(), userReplicView.getBalance());
+		addUserReplic(email, userReplic);
+		
 	}
 
  	// Getters -------------------------------------------------------------
@@ -131,5 +148,13 @@ public class Station {
     public synchronized int getAvailableBinas() {
     		return maxCapacity - freeDocks.get();
     }
+    
+    private UserReplic getUserReplic(String email) {
+    		UserReplic userReplic = userReplics.get(email);
+    		return userReplic;
+    }
     	
+    private void addUserReplic(String email, UserReplic userReplic) {
+    		userReplics.put(email, userReplic);
+    }
 }

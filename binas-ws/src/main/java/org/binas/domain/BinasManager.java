@@ -202,6 +202,15 @@ public class BinasManager {
 			return user;			
 		}
 	}
+	
+	public int getCredit(String email) throws UserNotExistsException {
+		int credit = -1;
+		
+		// User user = getUser(email);
+		// credit = user.getCredit();
+		
+		return credit;
+	}
 
 	public void registerStations() {
 		synchronized (this.stations) {

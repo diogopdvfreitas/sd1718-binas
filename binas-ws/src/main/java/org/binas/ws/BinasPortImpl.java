@@ -65,8 +65,7 @@ public class BinasPortImpl implements BinasPortType {
 	public int getCredit(String email) throws UserNotExists_Exception {
 		int credit = -1;
 		try {
-			User user = this.binasManager.getUser(email);
-			credit = user.getCredit();
+			credit = this.binasManager.getCredit(email);
 		} catch (UserNotExistsException une) {
 			throwUserNotExists("There isn't a user with that mail");
 		}
