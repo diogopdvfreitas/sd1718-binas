@@ -4,27 +4,24 @@ public class UserReplic {
 	
 	private String email;
 	private int credit;
+	private int tag;
 
-	public UserReplic(String email, int credit) {
+	public UserReplic(String email, int credit, int tag) {
 		this.email = email;
 		this.credit = credit;
+		this.tag = tag;
 	}
 	
-	public UserReplic(String email) {
-		this.email = email;
-		this.credit = 0;
-	}
-	
-	public int getBalance() {
+	public int getValue() {
 		return this.credit;
-	}
-	
-	public void setBalance(int credit) {
-		this.credit = credit;
 	}
 	
 	public String getEmail() {
 		return this.email;
+	}
+	
+	public int getTag() {
+		return this.tag;
 	}
 
 }

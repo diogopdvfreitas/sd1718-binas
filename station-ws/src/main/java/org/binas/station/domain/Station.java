@@ -103,7 +103,7 @@ public class Station {
 	}
 	
 	public void setBalance(String email, UserReplicView userReplicView) {
-		UserReplic userReplic = new UserReplic(userReplicView.getEmail(), userReplicView.getBalance());
+		UserReplic userReplic = new UserReplic(userReplicView.getEmail(), userReplicView.getValue(), userReplicView.getTag());
 		addUserReplic(email, userReplic);
 		
 	}

@@ -15,7 +15,7 @@ import org.binas.station.domain.exception.NoSlotAvailException;
  */
 @WebService(
 	endpointInterface = "org.binas.station.ws.StationPortType",
-	wsdlLocation = "station.1_0.wsdl",
+	wsdlLocation = "station.2_0.wsdl",
 	name = "StationWebService",
 	portName = "StationPort",
 	targetNamespace = "http://ws.station.binas.org/",
@@ -37,6 +37,17 @@ public class StationPortImpl implements StationPortType {
 	}
 
 	// Main operations -------------------------------------------------------
+	
+	@Override
+	public UserReplicView getBalance(String email) {
+		UserReplic userReplic = station.getBalance(email);
+		return buildUserReplicView(userReplic);
+	}
+
+	@Override
+	public void setBalance(String email, UserReplicView userReplic) {
+		station.setBalance(email, userReplic);
+	}
 
 	/** Retrieve information about station. */
 	@Override
@@ -64,18 +75,6 @@ public class StationPortImpl implements StationPortType {
 		} catch (NoBinaAvailException nbae) {
 			throwNoBinaAvail("No Binas available");
 		}
-	}
-	
-	@Override
-	public UserReplicView getBalance(String email) {
-		UserReplic userReplic = station.getBalance(email);
-		return buildUserReplicView(userReplic);
-	}
-	
-	@Override
-	public void setBalance(String email, UserReplicView userReplic) {
-		station.setBalance(email, userReplic);
-		
 	}
 
 	// Test Control operations -----------------------------------------------
@@ -119,11 +118,14 @@ public class StationPortImpl implements StationPortType {
 	// View helpers----------------------------------------------------------
 	
 	private UserReplicView buildUserReplicView(UserReplic userReplic) {
+		if (userReplic == null) return null;
+		
 		UserReplicView view = new UserReplicView();
 		
 		synchronized (userReplic) {
-			view.setBalance(userReplic.getBalance());
-			view.setEmail(userReplic.getEmail());			
+			view.setValue(userReplic.getValue());
+			view.setEmail(userReplic.getEmail());
+			view.setTag(userReplic.getTag());
 		}
 		
 		return view;
