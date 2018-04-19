@@ -347,7 +347,7 @@ public class BinasManager {
 	
 	public UserReplicView getBalance(String email) throws UserNotExistsException {
 		UserReplicView user, maxTagUser = null;
-		int stationCounter = 0;
+		// int stationCounter = 0;
 		
 		synchronized (this.stations) {
 			for (StationPortType station : this.stations) {
@@ -359,7 +359,7 @@ public class BinasManager {
 					maxTagUser = user;
 				}
 				
-				stationCounter++;
+				// stationCounter++;
 			}
 		}
 		
@@ -368,20 +368,32 @@ public class BinasManager {
 		return maxTagUser;
 	}
 	
-	public void setBalance(String email, int balance) throws UserNotExistsException {
-		UserReplicView user = getBalance(email);
-		
-		if (user == null) throw new UserNotExistsException();
-		
-		TagView maxTag = user.getTag();
+	public void setBalance(String email, int balance) {
+		UserReplicView user = null;
 		TagView newTag = new TagView();
 		
 		newTag.setClientID(ID);
-		newTag.setSeq(maxTag.getSeq() + 1);
 		
-		user.setTag(newTag);
-		user.setValue(balance);
-
+		try {
+			user = getBalance(email);
+			
+			TagView maxTag = user.getTag();
+			
+			newTag.setSeq(maxTag.getSeq() + 1);
+			
+			user.setTag(newTag);
+			user.setValue(balance);
+			
+		} catch (UserNotExistsException unee) {
+			user = new UserReplicView();
+			
+			newTag.setSeq(0);
+			
+			user.setEmail(email);
+			user.setTag(newTag);
+			user.setValue(balance);
+		}
+		
 		synchronized (this.stations) {
 			for (StationPortType station : this.stations) {
 				station.setBalance(email, user);
