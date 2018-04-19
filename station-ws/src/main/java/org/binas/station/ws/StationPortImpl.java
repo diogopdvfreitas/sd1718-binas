@@ -4,6 +4,7 @@ import javax.jws.WebService;
 
 import org.binas.station.domain.Coordinates;
 import org.binas.station.domain.Station;
+import org.binas.station.domain.Tag;
 import org.binas.station.domain.UserReplic;
 import org.binas.station.domain.exception.BadInitException;
 import org.binas.station.domain.exception.NoBinaAvailException;
@@ -121,11 +122,16 @@ public class StationPortImpl implements StationPortType {
 		if (userReplic == null) return null;
 		
 		UserReplicView view = new UserReplicView();
+		TagView tagView = new TagView();
 		
 		synchronized (userReplic) {
+			Tag tag = userReplic.getTag();
+			tagView.setSeq(tag.getSeq());
+			tagView.setClientID(tag.getClientID());
+			
 			view.setValue(userReplic.getValue());
 			view.setEmail(userReplic.getEmail());
-			view.setTag(userReplic.getTag());
+			view.setTag(tagView);
 		}
 		
 		return view;

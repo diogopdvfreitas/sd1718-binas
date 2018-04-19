@@ -32,6 +32,7 @@ import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 import org.binas.station.ws.StationView;
+import org.binas.station.ws.UserReplicView;
 import org.binas.ws.CoordinatesView;
 
 public class BinasManager {
@@ -51,6 +52,8 @@ public class BinasManager {
 	
 	private Collection<StationPortType> stations = Collections.synchronizedList(new ArrayList<StationPortType>());
 	private Collection<User> users = Collections.synchronizedSet(new HashSet<User>());
+	
+	private int quorum;
 	
 	private boolean verbose = false;
 
@@ -91,6 +94,7 @@ public class BinasManager {
 			requestContext.put(ENDPOINT_ADDRESS_PROPERTY, wsURL);
 			
 			this.stations.add(port);
+			calculateQuorum();
 		}
 	}
 	
@@ -230,7 +234,8 @@ public class BinasManager {
 	public void emptyStations() {
 		synchronized (this.stations) {
 			this.stations = Collections.synchronizedList(new ArrayList<StationPortType>());			
-		}
+			this.quorum = 0;
+		}		
 	}
 	
 	public void emptyUsers() {
@@ -335,6 +340,20 @@ public class BinasManager {
 			return stationsList;
 		
 		return stationsList.subList(0, numberOfStations);
+	}
+	
+	public UserReplicView getBalance(String email) throws UserNotExistsException {
+		// TODO
+	}
+	
+	public void setBalance(String email) throws UserNotExistsException {
+		// TODO
+	}
+	
+	// Helpers -------------------------------------------------------------
+	
+	private void calculateQuorum() { 
+		this.quorum = (int) Math.ceil((double)stations.size() / 2);
 	}
 
 }

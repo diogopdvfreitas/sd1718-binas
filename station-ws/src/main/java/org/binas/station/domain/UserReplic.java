@@ -4,9 +4,9 @@ public class UserReplic {
 	
 	private String email;
 	private int credit;
-	private int tag;
+	private Tag tag;
 
-	public UserReplic(String email, int credit, int tag) {
+	public UserReplic(String email, int credit, Tag tag) {
 		this.email = email;
 		this.credit = credit;
 		this.tag = tag;
@@ -20,7 +20,7 @@ public class UserReplic {
 		return this.email;
 	}
 	
-	public int getTag() {
+	public Tag getTag() {
 		return this.tag;
 	}
 

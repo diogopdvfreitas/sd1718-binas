@@ -18,11 +18,18 @@
 
             <!-- main service operations data types -->
             
+            <xs:complexType name="tagView">
+            	<xs:sequence>
+            		<xs:element name="seq" type="xs:int" />
+            		<xs:element name="clientID" type="xs:int" />
+            	</xs:sequence>
+            </xs:complexType>
+            
             <xs:complexType name="userReplicView">
             		<xs:sequence>
             			<xs:element name="email" type="xs:string" />
             			<xs:element name="value" type="xs:int" />
-            			<xs:element name="tag" type="xs:int" />
+            			<xs:element name="tag" type="tns:tagView" />
             		</xs:sequence>
             </xs:complexType>
 
