@@ -32,6 +32,7 @@ import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 import org.binas.station.ws.StationView;
+import org.binas.station.ws.TagView;
 import org.binas.station.ws.UserReplicView;
 import org.binas.ws.CoordinatesView;
 
@@ -42,6 +43,8 @@ public class BinasManager {
 	private BinasManager() {
 		reset();
 	}
+	
+	private static final int ID = 1;
 	
 	private String uddiURL;
 	private String stationsNamePattern;
@@ -343,17 +346,70 @@ public class BinasManager {
 	}
 	
 	public UserReplicView getBalance(String email) throws UserNotExistsException {
-		// TODO
+		UserReplicView user, maxTagUser = null;
+		int stationCounter = 0;
+		
+		synchronized (this.stations) {
+			for (StationPortType station : this.stations) {
+				if (stationCounter == this.quorum) break;
+				
+				user = station.getBalance(email);
+				
+				if (compareUserReplics(user, maxTagUser) > 0) {
+					maxTagUser = user;
+				}
+				
+				stationCounter++;
+			}
+		}
+		
+		if (maxTagUser == null) throw new UserNotExistsException();
+		
+		return maxTagUser;
 	}
 	
-	public void setBalance(String email) throws UserNotExistsException {
-		// TODO
+	public void setBalance(String email, int balance) throws UserNotExistsException {
+		UserReplicView user = getBalance(email);
+		
+		if (user == null) throw new UserNotExistsException();
+		
+		TagView maxTag = user.getTag();
+		TagView newTag = new TagView();
+		
+		newTag.setClientID(ID);
+		newTag.setSeq(maxTag.getSeq() + 1);
+		
+		user.setTag(newTag);
+		user.setValue(balance);
+
+		synchronized (this.stations) {
+			for (StationPortType station : this.stations) {
+				station.setBalance(email, user);
+			}
+		}
 	}
 	
 	// Helpers -------------------------------------------------------------
 	
 	private void calculateQuorum() { 
 		this.quorum = (int) Math.ceil((double)stations.size() / 2);
+	}
+	
+	private int compareUserReplics(UserReplicView u1, UserReplicView u2) {
+		if (u1 == null && u2 != null) return -1;
+		if (u1 != null && u2 == null) return 1;
+		if (u1 == null && u2 == null) return 0;
+		
+		TagView t1 = u1.getTag();
+		TagView t2 = u2.getTag();
+		
+		if (t1.getSeq() > t2.getSeq()) return 1;
+		if (t1.getSeq() < t2.getSeq()) return -1;
+		
+		if (t1.getClientID() > t2.getClientID()) return 1;
+		if (t1.getClientID() < t2.getClientID()) return -1;
+		
+		return 0;
 	}
 
 }
