@@ -351,7 +351,7 @@ public class BinasManager {
 		
 		synchronized (this.stations) {
 			for (StationPortType station : this.stations) {
-				if (stationCounter == this.quorum) break;
+				// if (stationCounter == this.quorum) break;
 				
 				user = station.getBalance(email);
 				
