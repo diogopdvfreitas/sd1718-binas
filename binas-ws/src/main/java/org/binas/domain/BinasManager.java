@@ -33,6 +33,7 @@ import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 import org.binas.station.ws.StationView;
 import org.binas.station.ws.TagView;
+import org.binas.station.ws.UserNotExists_Exception;
 import org.binas.station.ws.UserReplicView;
 import org.binas.ws.CoordinatesView;
 
@@ -43,8 +44,6 @@ public class BinasManager {
 	private BinasManager() {
 		reset();
 	}
-	
-	private static final int ID = 1;
 	
 	private String uddiURL;
 	private String stationsNamePattern;
@@ -105,6 +104,10 @@ public class BinasManager {
 
 	public boolean isVerbose() {
 		return verbose;
+	}
+	
+	public int getUserInitialPoints() {
+		return this.userInitialPoints;
 	}
 	
 	public Collection<User> getUsers() {
@@ -199,24 +202,21 @@ public class BinasManager {
 	// Manager logic  ---------------------------------------------------------
 	
 	public User createAndAddUser(String email) throws EmailExistsException, InvalidEmailException {
-		User user = new User(email, this.userInitialPoints);
+		User user = new User(email);
 		
 		synchronized (this.users) {
 			if (!this.users.add(user)) {
 				throw new EmailExistsException();
 			};
 			
+			setBalance(email, this.userInitialPoints);
+			
 			return user;			
 		}
 	}
 	
 	public int getCredit(String email) throws UserNotExistsException {
-		int credit = -1;
-		
-		// User user = getUser(email);
-		// credit = user.getCredit();
-		
-		return credit;
+		return getBalance(email).getValue();
 	}
 
 	public void registerStations() {
@@ -345,34 +345,32 @@ public class BinasManager {
 		return stationsList.subList(0, numberOfStations);
 	}
 	
+	// TODO
+	// when async, waits for quorum number of stations to answer, and picks the user with the freshest tag
 	public UserReplicView getBalance(String email) throws UserNotExistsException {
-		UserReplicView user, maxTagUser = null;
+		List<UserReplicView> users = new ArrayList<UserReplicView>();
 		// int stationCounter = 0;
 		
 		synchronized (this.stations) {
 			for (StationPortType station : this.stations) {
 				// if (stationCounter == this.quorum) break;
-				
-				user = station.getBalance(email);
-				
-				if (compareUserReplics(user, maxTagUser) > 0) {
-					maxTagUser = user;
+				try {
+					users.add(station.getBalance(email));						
+				} catch (UserNotExists_Exception unee) {
+					throw new UserNotExistsException();
 				}
-				
 				// stationCounter++;
 			}
 		}
 		
-		if (maxTagUser == null) throw new UserNotExistsException();
-		
-		return maxTagUser;
+		return pickUser(users);
 	}
 	
+	// TODO
+	// should wait to receive response from at least the quorum of the stations
 	public void setBalance(String email, int balance) {
 		UserReplicView user = null;
 		TagView newTag = new TagView();
-		
-		newTag.setClientID(ID);
 		
 		try {
 			user = getBalance(email);
@@ -404,24 +402,19 @@ public class BinasManager {
 	// Helpers -------------------------------------------------------------
 	
 	private void calculateQuorum() { 
-		this.quorum = (int) Math.ceil((double)stations.size() / 2);
+		this.quorum = (int) (stations.size() / 2) + 1;
 	}
 	
-	private int compareUserReplics(UserReplicView u1, UserReplicView u2) {
-		if (u1 == null && u2 != null) return -1;
-		if (u1 != null && u2 == null) return 1;
-		if (u1 == null && u2 == null) return 0;
+	private UserReplicView pickUser(List<UserReplicView> users) {
+		UserReplicView maxTagUser = null;
 		
-		TagView t1 = u1.getTag();
-		TagView t2 = u2.getTag();
+		for (UserReplicView user : users) {
+			if (user.getTag().getSeq() > maxTagUser.getTag().getSeq()) {
+				maxTagUser = user;
+			}
+		}
 		
-		if (t1.getSeq() > t2.getSeq()) return 1;
-		if (t1.getSeq() < t2.getSeq()) return -1;
-		
-		if (t1.getClientID() > t2.getClientID()) return 1;
-		if (t1.getClientID() < t2.getClientID()) return -1;
-		
-		return 0;
+		return maxTagUser;
 	}
 
 }

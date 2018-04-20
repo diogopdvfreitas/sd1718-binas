@@ -8,6 +8,7 @@ import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 import org.binas.station.ws.StationView;
+import org.binas.station.ws.UserNotExists_Exception;
 import org.binas.station.ws.UserReplicView;
 
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
@@ -103,7 +104,7 @@ public class StationClient implements StationPortType {
 	// remote invocation methods ----------------------------------------------
 
 	@Override
-	public UserReplicView getBalance(String email) {
+	public UserReplicView getBalance(String email) throws UserNotExists_Exception {
 		return port.getBalance(email);
 	}
 

@@ -8,21 +8,12 @@ import org.binas.exception.InvalidEmailException;
 public class User {
 	private String email;
 	private Boolean hasBina;
-	private Integer credit;
 	
 	private static final Pattern EMAIL_PATTERN = Pattern.compile("^(\\p{Alnum}+\\.?)+@(\\p{Alnum}+\\.?)+$");
 	
 	public User(String email) throws InvalidEmailException {
 		checkEmail(email);
 		this.email = email;
-		this.credit = 10;
-		this.hasBina = false;
-	}
-	
-	public User(String email, int userInitialPoints) throws InvalidEmailException {
-		checkEmail(email);
-		this.email = email;
-		this.credit = userInitialPoints;
 		this.hasBina = false;
 	}
 	
@@ -34,10 +25,6 @@ public class User {
 		if (!m.matches()) {
 			throw new InvalidEmailException("Invalid email format: " +  email);
 		}
-	}
-	
-	public Integer getCredit() {
-		return this.credit;
 	}
 	
 	public String getEmail() {
@@ -53,15 +40,11 @@ public class User {
 	}
 	
 	public boolean takeBina() {
-		if (this.credit < 1) return false;
-		this.credit--;
 		this.hasBina = true;
 		return true;
 	}
 	
 	public boolean takeBina(int points) {
-		if (this.credit < 1) return false;
-		this.credit -= points;
 		this.hasBina = true;
 		return true;
 	}
@@ -71,7 +54,6 @@ public class User {
 	}
 	
 	public void returnBina(int points) {
-		this.credit += points;
 		this.hasBina = false;
 	}
 	
@@ -98,8 +80,6 @@ public class User {
 		StringBuilder builder = new StringBuilder();
 		builder.append("User email=");
 		builder.append(this.email);
-		builder.append(", credit=");
-		builder.append(this.credit);
 		builder.append(", has bina=");
 		builder.append(this.hasBina ? "true" : "false");
 		return builder.toString();

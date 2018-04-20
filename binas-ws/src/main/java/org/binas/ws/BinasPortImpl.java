@@ -79,7 +79,7 @@ public class BinasPortImpl implements BinasPortType {
 			User user = this.binasManager.createAndAddUser(email);
 			userView = new UserView();
 			userView.setEmail(user.getEmail());
-			userView.setCredit(user.getCredit());
+			userView.setCredit(this.binasManager.getUserInitialPoints());
 			userView.setHasBina(user.hasBina());
 		} catch (EmailExistsException eee) {
 			throwEmailExists("There's already a user registered with this email");

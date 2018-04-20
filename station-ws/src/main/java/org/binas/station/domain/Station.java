@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.binas.station.domain.exception.BadInitException;
 import org.binas.station.domain.exception.NoBinaAvailException;
 import org.binas.station.domain.exception.NoSlotAvailException;
+import org.binas.station.domain.exception.UserNotExistsException;
 import org.binas.station.ws.UserReplicView;
 
 /** Domain Root. */
@@ -97,13 +98,14 @@ public class Station {
 		totalGets.incrementAndGet();
 	}
 	
-	public UserReplic getBalance(String email) {
+	public UserReplic getBalance(String email) throws UserNotExistsException {
 		UserReplic userReplic = getUserReplic(email);
+		if (userReplic == null) throw new UserNotExistsException();
 		return userReplic;
 	}
 	
 	public void setBalance(String email, UserReplicView userReplicView) {
-		Tag tag = new Tag(userReplicView.getTag().getSeq(), userReplicView.getTag().getClientID());		
+		Tag tag = new Tag(userReplicView.getTag().getSeq());		
 		UserReplic userReplic = new UserReplic(userReplicView.getEmail(), userReplicView.getValue(), tag);
 		
 		addUserReplic(email, userReplic);

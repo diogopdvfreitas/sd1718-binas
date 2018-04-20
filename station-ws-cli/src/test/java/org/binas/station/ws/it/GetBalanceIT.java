@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import org.binas.station.ws.BadInit_Exception;
 import org.binas.station.ws.TagView;
+import org.binas.station.ws.UserNotExists_Exception;
 import org.binas.station.ws.UserReplicView;
 import org.junit.After;
 import org.junit.Before;
@@ -24,8 +25,7 @@ public class GetBalanceIT extends BaseIT {
 	
 	private static final String EMAIL1 = "example1@gmail.com";
 	
-	private static final int SEQ = 1;
-	private static final int CLIENT_ID = 100;
+	private static final long SEQ = 1;
 	private static final int VALUE = 0;
 	
 	@Before
@@ -34,7 +34,6 @@ public class GetBalanceIT extends BaseIT {
 		
 		tag = new TagView();
 		tag.setSeq(SEQ);
-		tag.setClientID(CLIENT_ID);
 		
 		user = new UserReplicView();
 		user.setEmail(EMAIL1);
@@ -42,20 +41,18 @@ public class GetBalanceIT extends BaseIT {
 		user.setValue(VALUE);
 	}
 	
-	@Test
-	public void noUsers() {
-		UserReplicView user = client.getBalance(EMAIL1);
-		assertNull(user);
+	@Test(expected = UserNotExists_Exception.class)
+	public void noUsers() throws UserNotExists_Exception {
+		client.getBalance(EMAIL1);
 	}
 	
 	@Test
-	public void getBalance() {
+	public void getBalance() throws UserNotExists_Exception {
 		client.setBalance(EMAIL1, user);
 		UserReplicView newUser = client.getBalance(EMAIL1);
 		
 		assertEquals(EMAIL1, newUser.getEmail());
 		assertEquals(SEQ, newUser.getTag().getSeq());
-		assertEquals(CLIENT_ID, newUser.getTag().getClientID());
 		assertEquals(VALUE, newUser.getValue());
 	}
 	

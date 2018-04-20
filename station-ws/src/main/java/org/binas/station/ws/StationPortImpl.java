@@ -9,6 +9,7 @@ import org.binas.station.domain.UserReplic;
 import org.binas.station.domain.exception.BadInitException;
 import org.binas.station.domain.exception.NoBinaAvailException;
 import org.binas.station.domain.exception.NoSlotAvailException;
+import org.binas.station.domain.exception.UserNotExistsException;
 
 /**
  * This class implements the Web Service port type (interface). The annotations
@@ -40,9 +41,14 @@ public class StationPortImpl implements StationPortType {
 	// Main operations -------------------------------------------------------
 	
 	@Override
-	public UserReplicView getBalance(String email) {
-		UserReplic userReplic = station.getBalance(email);
-		return buildUserReplicView(userReplic);
+	public UserReplicView getBalance(String email) throws UserNotExists_Exception {
+		UserReplicView userReplic = null;
+		try {
+			return buildUserReplicView(station.getBalance(email));	
+		} catch (UserNotExistsException unee) {
+			throwUserNotExists("User is not registered in this station");
+		}
+		return userReplic;
 	}
 
 	@Override
@@ -127,7 +133,6 @@ public class StationPortImpl implements StationPortType {
 		synchronized (userReplic) {
 			Tag tag = userReplic.getTag();
 			tagView.setSeq(tag.getSeq());
-			tagView.setClientID(tag.getClientID());
 			
 			view.setValue(userReplic.getValue());
 			view.setEmail(userReplic.getEmail());
@@ -186,6 +191,14 @@ public class StationPortImpl implements StationPortType {
 		BadInit faultInfo = new BadInit();
 		faultInfo.message = message;
 		throw new BadInit_Exception(message, faultInfo);
+	}
+
+	//
+	/** Helper to throw a new UserNotExists exception. */
+	private void throwUserNotExists(final String message) throws UserNotExists_Exception {
+		UserNotExists faultInfo = new UserNotExists();
+		faultInfo.message = message;
+		throw new UserNotExists_Exception(message, faultInfo);
 	}
 
 }
