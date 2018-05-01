@@ -39,21 +39,11 @@ public class User {
 		return this.hasBina;
 	}
 	
-	public boolean takeBina() {
+	public void takeBina() { 
 		this.hasBina = true;
-		return true;
-	}
-	
-	public boolean takeBina(int points) {
-		this.hasBina = true;
-		return true;
 	}
 	
 	public void returnBina() {
-		this.hasBina = false;
-	}
-	
-	public void returnBina(int points) {
 		this.hasBina = false;
 	}
 	

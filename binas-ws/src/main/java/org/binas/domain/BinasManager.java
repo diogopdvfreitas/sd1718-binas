@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.ws.BindingProvider;
 
@@ -26,7 +27,10 @@ import org.binas.exception.NoBinaAvailException;
 import org.binas.exception.NoBinaRentedException;
 import org.binas.exception.NoCreditException;
 import org.binas.exception.UserNotExistsException;
+
 import org.binas.station.ws.BadInit_Exception;
+import org.binas.station.ws.InvalidEmail_Exception;
+import org.binas.station.ws.InvalidUserReplic_Exception;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.StationPortType;
@@ -35,6 +39,7 @@ import org.binas.station.ws.StationView;
 import org.binas.station.ws.TagView;
 import org.binas.station.ws.UserNotExists_Exception;
 import org.binas.station.ws.UserReplicView;
+
 import org.binas.ws.CoordinatesView;
 
 public class BinasManager {
@@ -55,7 +60,10 @@ public class BinasManager {
 	private Collection<StationPortType> stations = Collections.synchronizedList(new ArrayList<StationPortType>());
 	private Collection<User> users = Collections.synchronizedSet(new HashSet<User>());
 	
-	private int quorum;
+	private AtomicInteger quorum = new AtomicInteger(0);
+	
+	// from callbacks
+	private static Collection<UserReplicView> userReplics = Collections.synchronizedList(new ArrayList<UserReplicView>());
 	
 	private boolean verbose = false;
 
@@ -209,7 +217,7 @@ public class BinasManager {
 				throw new EmailExistsException();
 			};
 			
-			setBalance(email, this.userInitialPoints);
+			setBalance(email, this.userInitialPoints);				
 			
 			return user;			
 		}
@@ -237,7 +245,7 @@ public class BinasManager {
 	public void emptyStations() {
 		synchronized (this.stations) {
 			this.stations = Collections.synchronizedList(new ArrayList<StationPortType>());			
-			this.quorum = 0;
+			this.quorum.set(0);
 		}		
 	}
 	
@@ -273,21 +281,23 @@ public class BinasManager {
 	
 	public synchronized void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
 		NoBinaAvailException, NoCreditException, UserNotExistsException {
-	
+		
 		User user = getUser(email);
+		UserReplicView userReplic = getBalance(email);
+		
 		StationPortType station = getStation(stationId);
 		
 		if (user.hasBina()) throw new AlreadyHasBinaException();
-		if (!user.takeBina()) throw new NoCreditException();
+		if (userReplic.getValue() < 1) throw new NoCreditException();
 		
 		try {
 			station.getBina();
+			this.setBalance(email, userReplic.getValue() - 1);
+			user.takeBina();
 		} catch (NoBinaAvail_Exception nbae) {
-			
-			// must increment the credit by 1, because an error occurred and we want to rollback the user state
-			user.returnBina(1);
-			
 			throw new NoBinaAvailException();
+		} catch (InvalidEmailException iee) {
+			// email verification happens above
 		}
 	}
 	
@@ -296,14 +306,20 @@ public class BinasManager {
 		
 		int bonus = 0;		
 		User user = getUser(email);
+		UserReplicView userReplic = getBalance(email);
 		StationPortType station = getStation(stationId);
 		
 		if(!user.hasBina()) throw new NoBinaRentedException();
 		
 		try {
 			bonus = station.returnBina();
-			user.returnBina(bonus);
-		} catch(NoSlotAvail_Exception nsae) { throw new FullStationException(); }		
+			this.setBalance(email, userReplic.getValue() + bonus);
+			user.returnBina();
+		} catch(NoSlotAvail_Exception nsae) {
+			throw new FullStationException();
+		} catch (InvalidEmailException iee) {
+			// email verification happens above
+		}	
 	}
 	
 	public List<org.binas.station.ws.StationView> getNearestStationsList(Integer numberOfStations, CoordinatesView coordinates) {
@@ -362,19 +378,18 @@ public class BinasManager {
 				// stationCounter++;
 			}
 		}
-		
-		return pickUser(users);
+		return pickUser();
 	}
 	
 	// TODO
 	// should wait to receive response from at least the quorum of the stations
-	public void setBalance(String email, int balance) {
+	public void setBalance(String email, int balance) throws InvalidEmailException {
 		UserReplicView user = null;
 		TagView newTag = new TagView();
 		
 		try {
 			user = getBalance(email);
-			
+
 			TagView maxTag = user.getTag();
 			
 			newTag.setSeq(maxTag.getSeq() + 1);
@@ -386,15 +401,21 @@ public class BinasManager {
 			user = new UserReplicView();
 			
 			newTag.setSeq(0);
-			
-			user.setEmail(email);
 			user.setTag(newTag);
 			user.setValue(balance);
 		}
 		
 		synchronized (this.stations) {
 			for (StationPortType station : this.stations) {
-				station.setBalance(email, user);
+				try {
+					station.setBalance(email, user);					
+				} catch (InvalidUserReplic_Exception iure) {
+					// InvalidUserReplic_Exception is thrown when user is null
+					// According to the code above, this never happens
+					// throw new InvalidUserReplicException();
+				} catch (InvalidEmail_Exception iee) {
+					throw new InvalidEmailException();
+				}
 			}
 		}
 	}
@@ -402,18 +423,25 @@ public class BinasManager {
 	// Helpers -------------------------------------------------------------
 	
 	private void calculateQuorum() { 
-		this.quorum = (int) (stations.size() / 2) + 1;
+		this.quorum.set( (int) (stations.size() / 2) + 1 );
 	}
 	
-	private UserReplicView pickUser(List<UserReplicView> users) {
+	private int getQuroum() {
+		return this.quorum.get();
+	}
+	
+	private UserReplicView pickUser() {
 		UserReplicView maxTagUser = null;
+		long maxSeq = -1;
 		
-		for (UserReplicView user : users) {
-			if (user.getTag().getSeq() > maxTagUser.getTag().getSeq()) {
+		for (UserReplicView user : userReplics) {
+			if (user.getTag().getSeq() > maxSeq) {
 				maxTagUser = user;
+				maxSeq = user.getTag().getSeq();
 			}
 		}
 		
+		userReplics.clear();
 		return maxTagUser;
 	}
 

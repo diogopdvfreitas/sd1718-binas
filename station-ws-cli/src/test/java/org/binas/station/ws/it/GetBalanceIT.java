@@ -2,7 +2,13 @@ package org.binas.station.ws.it;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.ExecutionException;
+
+import javax.xml.ws.AsyncHandler;
+import javax.xml.ws.Response;
+
 import org.binas.station.ws.BadInit_Exception;
+import org.binas.station.ws.GetBalanceResponse;
 import org.binas.station.ws.InvalidEmail_Exception;
 import org.binas.station.ws.InvalidUserReplic_Exception;
 import org.binas.station.ws.TagView;
@@ -29,6 +35,8 @@ public class GetBalanceIT extends BaseIT {
 	
 	private static final long SEQ = 1;
 	private static final int VALUE = 0;
+	
+	static UserReplicView userReplicAsync = null;
 	
 	@Before
 	public void setUp() throws BadInit_Exception {
@@ -69,6 +77,27 @@ public class GetBalanceIT extends BaseIT {
 	@Test(expected = UserNotExists_Exception.class)
 	public void emptyEmail() throws UserNotExists_Exception {
 		client.getBalance("");
+	}
+	
+	@Test
+	public void getBalanceAsyncCallback() throws UserNotExists_Exception, InvalidEmail_Exception, InvalidUserReplic_Exception, InterruptedException {
+		client.setBalance(EMAIL1, user);
+		client.getBalanceAsync(EMAIL1, new AsyncHandler<GetBalanceResponse>() {
+			@Override
+			public void handleResponse(Response<GetBalanceResponse> res) {
+				try {
+					userReplicAsync = res.get().getUserReplic();
+				} catch (InterruptedException | ExecutionException e) {
+					fail("Error on the getBalance async callback");
+				}
+			}
+		});
+		
+		while(userReplicAsync == null) {
+			Thread.sleep(100);
+			assertEquals(SEQ, userReplicAsync.getTag().getSeq());
+			assertEquals(VALUE, userReplicAsync.getValue());
+		}
 	}
 	
 	@After

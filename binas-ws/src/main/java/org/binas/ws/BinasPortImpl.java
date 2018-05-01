@@ -2,8 +2,11 @@ package org.binas.ws;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 import javax.jws.WebService;
+import javax.xml.ws.AsyncHandler;
+import javax.xml.ws.Response;
 
 import org.binas.domain.BinasManager;
 import org.binas.domain.User;
