@@ -4,6 +4,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.binas.station.domain.exception.BadInitException;
+import org.binas.station.domain.exception.InvalidEmailException;
+import org.binas.station.domain.exception.InvalidUserReplicException;
 import org.binas.station.domain.exception.NoBinaAvailException;
 import org.binas.station.domain.exception.NoSlotAvailException;
 import org.binas.station.domain.exception.UserNotExistsException;
@@ -99,14 +101,19 @@ public class Station {
 	}
 	
 	public UserReplic getBalance(String email) throws UserNotExistsException {
+		if (email == null) throw new UserNotExistsException();
+		
 		UserReplic userReplic = getUserReplic(email);
 		if (userReplic == null) throw new UserNotExistsException();
 		return userReplic;
 	}
 	
-	public void setBalance(String email, UserReplicView userReplicView) {
+	public void setBalance(String email, UserReplicView userReplicView) throws InvalidEmailException, InvalidUserReplicException {
+		UserReplic.checkEmail(email);
+		if (userReplicView == null) throw new InvalidUserReplicException();
+		
 		Tag tag = new Tag(userReplicView.getTag().getSeq());		
-		UserReplic userReplic = new UserReplic(userReplicView.getEmail(), userReplicView.getValue(), tag);
+		UserReplic userReplic = new UserReplic(userReplicView.getValue(), tag);
 		
 		addUserReplic(email, userReplic);
 	}

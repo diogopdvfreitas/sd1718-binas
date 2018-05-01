@@ -25,6 +25,20 @@
             </xs:complexType>
             <xs:element name="UserNotExists" type="tns:UserNotExists" />
             
+            <xs:complexType name="InvalidEmail">
+                <xs:sequence>
+                    <xs:element name="message" type="xs:string" minOccurs="0" />
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="InvalidEmail" type="tns:InvalidEmail" />
+            
+            <xs:complexType name="InvalidUserReplic">
+                <xs:sequence>
+                    <xs:element name="message" type="xs:string" minOccurs="0" />
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="InvalidUserReplic" type="tns:InvalidUserReplic" />
+            
             <xs:complexType name="tagView">
             	<xs:sequence>
             		<xs:element name="seq" type="xs:long" />
@@ -33,7 +47,6 @@
             
             <xs:complexType name="userReplicView">
             		<xs:sequence>
-            			<xs:element name="email" type="xs:string" />
             			<xs:element name="value" type="xs:int" />
             			<xs:element name="tag" type="tns:tagView" />
             		</xs:sequence>
@@ -201,6 +214,14 @@
     		<part name="parameters" element="tns:getBalanceResponse" />
     </message>
     
+    <message name="InvalidEmail">
+        <part name="fault" element="tns:InvalidEmail" />
+    </message>
+    
+    <message name="InvalidUserReplic">
+        <part name="fault" element="tns:InvalidUserReplic" />
+    </message>
+    
     <message name="setBalance">
     		<part name="parameters" element="tns:setBalance" />
     </message>
@@ -282,6 +303,10 @@
                 message="tns:setBalance" />
             <output wsam:Action="http://ws.station.binas.org/Station/setBalanceResponse"
                 message="tns:setBalanceResponse" />
+            <fault message="tns:InvalidEmail" name="InvalidEmail"
+                wsam:Action="http://ws.binas.org/Station/getBalance/Fault/InvalidEmail" />
+            <fault message="tns:InvalidUserReplic" name="InvalidUserReplic"
+                wsam:Action="http://ws.binas.org/Station/getBalance/Fault/InvalidUserReplic" />
         </operation>
         
         <operation name="getInfo">
@@ -362,6 +387,12 @@
             <output>
                 <soap:body use="literal" />
             </output>
+            <fault name="InvalidEmail">
+                <soap:fault name="InvalidEmail" use="literal" />
+            </fault>
+            <fault name="InvalidUserReplic">
+                <soap:fault name="InvalidUserReplic" use="literal" />
+            </fault>
         </operation>
         
         <operation name="getInfo">

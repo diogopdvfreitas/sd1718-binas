@@ -3,6 +3,8 @@ package org.binas.station.ws.it;
 import static org.junit.Assert.*;
 
 import org.binas.station.ws.BadInit_Exception;
+import org.binas.station.ws.InvalidEmail_Exception;
+import org.binas.station.ws.InvalidUserReplic_Exception;
 import org.binas.station.ws.TagView;
 import org.binas.station.ws.UserNotExists_Exception;
 import org.binas.station.ws.UserReplicView;
@@ -36,7 +38,6 @@ public class GetBalanceIT extends BaseIT {
 		tag.setSeq(SEQ);
 		
 		user = new UserReplicView();
-		user.setEmail(EMAIL1);
 		user.setTag(tag);
 		user.setValue(VALUE);
 	}
@@ -47,13 +48,27 @@ public class GetBalanceIT extends BaseIT {
 	}
 	
 	@Test
-	public void getBalance() throws UserNotExists_Exception {
+	public void getBalance() throws UserNotExists_Exception, InvalidEmail_Exception, InvalidUserReplic_Exception {
 		client.setBalance(EMAIL1, user);
 		UserReplicView newUser = client.getBalance(EMAIL1);
 		
-		assertEquals(EMAIL1, newUser.getEmail());
 		assertEquals(SEQ, newUser.getTag().getSeq());
 		assertEquals(VALUE, newUser.getValue());
+	}
+	
+	@Test(expected = UserNotExists_Exception.class)
+	public void userNotExists() throws UserNotExists_Exception {
+		client.getBalance(EMAIL1);
+	}
+	
+	@Test(expected = UserNotExists_Exception.class)
+	public void nullEmail() throws UserNotExists_Exception {
+		client.getBalance(null);
+	}
+	
+	@Test(expected = UserNotExists_Exception.class)
+	public void emptyEmail() throws UserNotExists_Exception {
+		client.getBalance("");
 	}
 	
 	@After

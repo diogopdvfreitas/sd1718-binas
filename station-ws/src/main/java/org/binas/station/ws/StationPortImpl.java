@@ -7,9 +7,11 @@ import org.binas.station.domain.Station;
 import org.binas.station.domain.Tag;
 import org.binas.station.domain.UserReplic;
 import org.binas.station.domain.exception.BadInitException;
+import org.binas.station.domain.exception.InvalidEmailException;
 import org.binas.station.domain.exception.NoBinaAvailException;
 import org.binas.station.domain.exception.NoSlotAvailException;
 import org.binas.station.domain.exception.UserNotExistsException;
+import org.binas.station.domain.exception.InvalidUserReplicException;
 
 /**
  * This class implements the Web Service port type (interface). The annotations
@@ -52,8 +54,14 @@ public class StationPortImpl implements StationPortType {
 	}
 
 	@Override
-	public void setBalance(String email, UserReplicView userReplic) {
-		station.setBalance(email, userReplic);
+	public void setBalance(String email, UserReplicView userReplic) throws InvalidEmail_Exception, InvalidUserReplic_Exception {
+		try {
+			station.setBalance(email, userReplic);
+		} catch (InvalidEmailException iee) {
+			throwInvalidEmail("Invalid email");
+		} catch (InvalidUserReplicException iure) {
+			throwInvalidUserReplic("Invalid user replic");
+		}
 	}
 
 	/** Retrieve information about station. */
@@ -135,7 +143,6 @@ public class StationPortImpl implements StationPortType {
 			tagView.setSeq(tag.getSeq());
 			
 			view.setValue(userReplic.getValue());
-			view.setEmail(userReplic.getEmail());
 			view.setTag(tagView);
 		}
 		
@@ -199,6 +206,22 @@ public class StationPortImpl implements StationPortType {
 		UserNotExists faultInfo = new UserNotExists();
 		faultInfo.message = message;
 		throw new UserNotExists_Exception(message, faultInfo);
+	}
+	
+	//
+	/** Helper to throw a new InvalidEmail exception. */
+	private void throwInvalidEmail(final String message) throws InvalidEmail_Exception {
+		InvalidEmail faultInfo = new InvalidEmail();
+		faultInfo.message = message;
+		throw new InvalidEmail_Exception(message, faultInfo);
+	}
+
+	//
+	/** Helper to throw a new InvalidEmail exception. */
+	private void throwInvalidUserReplic(final String message) throws InvalidUserReplic_Exception {
+		InvalidUserReplic faultInfo = new InvalidUserReplic();
+		faultInfo.message = message;
+		throw new InvalidUserReplic_Exception(message, faultInfo);
 	}
 
 }

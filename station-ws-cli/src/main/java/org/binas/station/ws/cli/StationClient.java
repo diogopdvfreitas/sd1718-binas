@@ -3,6 +3,8 @@ package org.binas.station.ws.cli;
 import java.util.Map;
 import javax.xml.ws.BindingProvider;
 import org.binas.station.ws.BadInit_Exception;
+import org.binas.station.ws.InvalidEmail_Exception;
+import org.binas.station.ws.InvalidUserReplic_Exception;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.StationPortType;
@@ -109,7 +111,7 @@ public class StationClient implements StationPortType {
 	}
 
 	@Override
-	public void setBalance(String email, UserReplicView userReplic) {
+	public void setBalance(String email, UserReplicView userReplic) throws InvalidEmail_Exception, InvalidUserReplic_Exception {
 		port.setBalance(email, userReplic);
 	}
 	
