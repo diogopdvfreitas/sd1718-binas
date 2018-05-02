@@ -66,7 +66,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 	
 	@Test
-	public void successRentingInTwoStation() {
+	public void successRentingInTwoStations() {
 		int availableBinas1, availableBinas2, availableBinas3;
 		
 		try {
@@ -91,7 +91,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 	
 	@Test
-	public void successRentingInThreeStation() {
+	public void successRentingInThreeStations() {
 		int availableBinas1, availableBinas2, availableBinas3;
 		
 		try {

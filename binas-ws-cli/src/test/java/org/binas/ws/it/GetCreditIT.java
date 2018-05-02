@@ -10,7 +10,7 @@ import org.binas.ws.InvalidEmail_Exception;
 import org.binas.ws.UserNotExists_Exception;
 import org.binas.ws.UserView;
 
-public class GetCreditIT extends BaseIT{
+public class GetCreditIT extends BaseIT {
 
 	private static final Integer USER_INITIAL_POINTS = 10;
 	private static final String EMAIL = "e.2.mail@that.serv1ce.com";
@@ -39,7 +39,7 @@ public class GetCreditIT extends BaseIT{
 	}
 	
 	@Test(expected = UserNotExists_Exception.class)
-	public void userExists() throws UserNotExists_Exception {
+	public void userNotExists() throws UserNotExists_Exception {
 		try {
 			client.activateUser(EMAIL);
 			client.getCredit(EMAIL1);

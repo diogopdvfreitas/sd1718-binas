@@ -47,9 +47,9 @@ public class ListStationsIT extends BaseIT {
 		CoordinatesView cv = new CoordinatesView();
 		cv.setX(0); cv.setY(0);
 		
-		List<StationView> list = client.listStations(10, cv);
+		List<StationView> list = client.listStations(100, cv);
 		
-		assertEquals(3, list.size());
+		assertTrue(list.size() >= 3);
 		
 		assertEquals(list.get(0).getId(), STATION1_ID);
 		assertEquals(list.get(0).getCoordinate().getX(), (Integer) X1);

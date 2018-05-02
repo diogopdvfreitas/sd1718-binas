@@ -144,6 +144,11 @@ public class StationClient implements StationPortType {
 	}
 	
 	@Override
+	public Future<?> getBalanceAsync(String email, AsyncHandler<GetBalanceResponse> asyncHandler) {
+		return port.getBalanceAsync(email, asyncHandler);
+	}
+	
+	@Override
 	public StationView getInfo() {
 		return port.getInfo();
 	}
@@ -171,11 +176,6 @@ public class StationClient implements StationPortType {
 	@Override
 	public Future<?> getBinaAsync(AsyncHandler<GetBinaResponse> asyncHandler) {
 		return port.getBinaAsync(asyncHandler);
-	}
-	
-	@Override
-	public Future<?> getBalanceAsync(String email, AsyncHandler<GetBalanceResponse> asyncHandler) {
-		return port.getBalanceAsync(email, asyncHandler);
 	}
 
 	@Override

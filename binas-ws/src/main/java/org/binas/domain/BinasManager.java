@@ -9,9 +9,12 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.xml.ws.AsyncHandler;
 import javax.xml.ws.BindingProvider;
+import javax.xml.ws.Response;
 
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
@@ -29,15 +32,14 @@ import org.binas.exception.NoCreditException;
 import org.binas.exception.UserNotExistsException;
 
 import org.binas.station.ws.BadInit_Exception;
-import org.binas.station.ws.InvalidEmail_Exception;
-import org.binas.station.ws.InvalidUserReplic_Exception;
+import org.binas.station.ws.GetBalanceResponse;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.NoSlotAvail_Exception;
+import org.binas.station.ws.SetBalanceResponse;
 import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 import org.binas.station.ws.StationView;
 import org.binas.station.ws.TagView;
-import org.binas.station.ws.UserNotExists_Exception;
 import org.binas.station.ws.UserReplicView;
 
 import org.binas.ws.CoordinatesView;
@@ -63,7 +65,8 @@ public class BinasManager {
 	private AtomicInteger quorum = new AtomicInteger(0);
 	
 	// from callbacks
-	private static Collection<UserReplicView> userReplics = Collections.synchronizedList(new ArrayList<UserReplicView>());
+	static Collection<Response<GetBalanceResponse>> getBalanceResponse = Collections.synchronizedList(new ArrayList<Response<GetBalanceResponse>>());
+	static Collection<Response<SetBalanceResponse>> setBalanceResponse = Collections.synchronizedList(new ArrayList<Response<SetBalanceResponse>>());
 	
 	private boolean verbose = false;
 
@@ -199,6 +202,9 @@ public class BinasManager {
 		emptyStations();
 		emptyUsers();
 		this.userInitialPoints = USER_INITIAL_POINTS_DEFAULT;
+		this.quorum.set(0);
+		getBalanceResponse.clear();
+		setBalanceResponse.clear();
 	}
 	
 	public synchronized void testClearStations() {
@@ -215,12 +221,12 @@ public class BinasManager {
 		synchronized (this.users) {
 			if (!this.users.add(user)) {
 				throw new EmailExistsException();
-			};
-			
-			setBalance(email, this.userInitialPoints);				
-			
-			return user;			
+			};			
 		}
+		
+		setBalance(email, this.userInitialPoints);
+		
+		return user;		
 	}
 	
 	public int getCredit(String email) throws UserNotExistsException {
@@ -281,8 +287,8 @@ public class BinasManager {
 	
 	public synchronized void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
 		NoBinaAvailException, NoCreditException, UserNotExistsException {
-		
 		User user = getUser(email);
+		
 		UserReplicView userReplic = getBalance(email);
 		
 		StationPortType station = getStation(stationId);
@@ -292,7 +298,7 @@ public class BinasManager {
 		
 		try {
 			station.getBina();
-			this.setBalance(email, userReplic.getValue() - 1);
+			setBalance(email, userReplic.getValue() - 1);
 			user.takeBina();
 		} catch (NoBinaAvail_Exception nbae) {
 			throw new NoBinaAvailException();
@@ -303,9 +309,9 @@ public class BinasManager {
 	
 	public synchronized void returnBina(String stationId, String email) throws FullStationException, InvalidStationException,
 		NoBinaRentedException, UserNotExistsException {
-		
 		int bonus = 0;		
 		User user = getUser(email);
+		
 		UserReplicView userReplic = getBalance(email);
 		StationPortType station = getStation(stationId);
 		
@@ -313,7 +319,7 @@ public class BinasManager {
 		
 		try {
 			bonus = station.returnBina();
-			this.setBalance(email, userReplic.getValue() + bonus);
+			setBalance(email, userReplic.getValue() + bonus);
 			user.returnBina();
 		} catch(NoSlotAvail_Exception nsae) {
 			throw new FullStationException();
@@ -361,31 +367,40 @@ public class BinasManager {
 		return stationsList.subList(0, numberOfStations);
 	}
 	
-	// TODO
-	// when async, waits for quorum number of stations to answer, and picks the user with the freshest tag
 	public UserReplicView getBalance(String email) throws UserNotExistsException {
-		List<UserReplicView> users = new ArrayList<UserReplicView>();
-		// int stationCounter = 0;
+		UserReplicView user;
+		
+		while(!this.isGetBalanceFinished()) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				// TODO
+			}
+		}
 		
 		synchronized (this.stations) {
 			for (StationPortType station : this.stations) {
-				// if (stationCounter == this.quorum) break;
-				try {
-					users.add(station.getBalance(email));						
-				} catch (UserNotExists_Exception unee) {
-					throw new UserNotExistsException();
-				}
-				// stationCounter++;
+				station.getBalanceAsync(email, getBalanceHandler());					
 			}
 		}
-		return pickUser();
+		
+		while (!this.isGetBalanceReady()) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				// TODO
+			}
+		}
+		
+		user = getGetBalanceResult();
+				
+		return user;
 	}
 	
-	// TODO
-	// should wait to receive response from at least the quorum of the stations
 	public void setBalance(String email, int balance) throws InvalidEmailException {
 		UserReplicView user = null;
 		TagView newTag = new TagView();
+		UserReplicView newUser = null;
 		
 		try {
 			user = getBalance(email);
@@ -394,30 +409,49 @@ public class BinasManager {
 			
 			newTag.setSeq(maxTag.getSeq() + 1);
 			
-			user.setTag(newTag);
-			user.setValue(balance);
+			newUser = new UserReplicView();
+			
+			newUser.setTag(newTag);
+			newUser.setValue(balance);
 			
 		} catch (UserNotExistsException unee) {
-			user = new UserReplicView();
+			newUser = new UserReplicView();
 			
 			newTag.setSeq(0);
-			user.setTag(newTag);
-			user.setValue(balance);
+			newUser.setTag(newTag);
+			newUser.setValue(balance);
+		}
+		
+		while(!this.isSetBalanceFinished()) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				// TODO
+			}
 		}
 		
 		synchronized (this.stations) {
 			for (StationPortType station : this.stations) {
-				try {
-					station.setBalance(email, user);					
-				} catch (InvalidUserReplic_Exception iure) {
-					// InvalidUserReplic_Exception is thrown when user is null
-					// According to the code above, this never happens
-					// throw new InvalidUserReplicException();
-				} catch (InvalidEmail_Exception iee) {
-					throw new InvalidEmailException();
-				}
+				station.setBalanceAsync(email, newUser, setBalanceHandler());
 			}
 		}
+		
+		while (!this.isSetBalanceReady()) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				// TODO
+			}
+		}
+		
+		try {
+			getBalance(email);
+		} catch (UserNotExistsException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		getSetBalanceResult();
 	}
 	
 	// Helpers -------------------------------------------------------------
@@ -426,23 +460,100 @@ public class BinasManager {
 		this.quorum.set( (int) (stations.size() / 2) + 1 );
 	}
 	
-	private int getQuroum() {
+	private int getQuorum() {
 		return this.quorum.get();
 	}
 	
-	private UserReplicView pickUser() {
-		UserReplicView maxTagUser = null;
-		long maxSeq = -1;
+	private boolean isGetBalanceReady() {
+		return getBalanceResponse.size() >= getQuorum();
+	}
+	
+	private boolean isSetBalanceReady() {
+		return setBalanceResponse.size() >= getQuorum();
+	}
+	
+	private boolean isGetBalanceFinished() {
+		if (getBalanceResponse.size() == this.stations.size()) {
+			getBalanceResponse.clear();
+			return true;
+		} else if (getBalanceResponse.size() == 0) return true;
+		return false;
+	}
+	
+	private boolean isSetBalanceFinished() {
+		if (setBalanceResponse.size() == this.stations.size()) {
+			setBalanceResponse.clear();
+			return true;
+		} else if (setBalanceResponse.size() == 0) return true;
+		return false;
+	}
+	
+	private UserReplicView getGetBalanceResult() throws UserNotExistsException {
+		UserReplicView user, maxTagUser = null;
 		
-		for (UserReplicView user : userReplics) {
-			if (user.getTag().getSeq() > maxSeq) {
-				maxTagUser = user;
-				maxSeq = user.getTag().getSeq();
+		synchronized (getBalanceResponse) {
+
+			for (Response<GetBalanceResponse> response : getBalanceResponse) {
+				try {
+					user = response.get().getUserReplic();
+					
+					if (maxTagUser == null || user.getTag().getSeq() > maxTagUser.getTag().getSeq()) {
+						maxTagUser = user;
+					}
+					
+				} catch (InterruptedException e) {
+					// TODO generate callback error
+				} catch (ExecutionException e) {
+					// InvalidUserReplic_Exception is never caught because user is never null
+				}
 			}
 		}
-		
-		userReplics.clear();
+				
+		if (maxTagUser == null) throw new UserNotExistsException();
+				
 		return maxTagUser;
+	}
+	
+	private void getSetBalanceResult() throws InvalidEmailException {
+		boolean invalidEmail = true;
+		
+		synchronized (setBalanceResponse) {
+			for(Response<SetBalanceResponse> response : setBalanceResponse) {
+				try {
+					response.get();
+					invalidEmail = false;
+				} catch (InterruptedException e) {
+					// TODO
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					// if an execution exception is caught, the invalidEmail value remains true
+					// but if not, then at least one of the responses didn't give an exception
+				}
+			}			
+		}
+				
+		if (invalidEmail) throw new InvalidEmailException();
+	}
+	
+	// Handlers for callback -------------------------------------------------------------
+	private AsyncHandler<GetBalanceResponse> getBalanceHandler() {
+		return new AsyncHandler<GetBalanceResponse>() {
+			@Override
+			public void handleResponse(Response<GetBalanceResponse> res) {
+				getBalanceResponse.add(res);
+			}
+		};
+	}
+	
+	private AsyncHandler<SetBalanceResponse> setBalanceHandler() {
+		return new AsyncHandler<SetBalanceResponse>() {
+			@Override
+			public void handleResponse(Response<SetBalanceResponse> res) {
+				synchronized (setBalanceResponse) {
+					setBalanceResponse.add(res);					
+				}
+			}
+		};
 	}
 
 }

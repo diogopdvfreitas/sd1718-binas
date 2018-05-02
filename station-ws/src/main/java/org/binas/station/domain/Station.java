@@ -159,12 +159,12 @@ public class Station {
     		return maxCapacity - freeDocks.get();
     }
     
-    private UserReplic getUserReplic(String email) {
-    		UserReplic userReplic = userReplics.get(email);
-    		return userReplic;
+    private synchronized UserReplic getUserReplic(String email) {
+		UserReplic userReplic = userReplics.get(email);		
+		return userReplic;
     }
     	
-    private void addUserReplic(String email, UserReplic userReplic) {
-    		userReplics.put(email, userReplic);
+    private synchronized void addUserReplic(String email, UserReplic userReplic) {  	
+		userReplics.put(email, userReplic);
     }
 }
