@@ -1,5 +1,7 @@
 package org.binas.station.ws.cli;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -23,6 +25,8 @@ import org.binas.station.ws.StationView;
 import org.binas.station.ws.TestClearResponse;
 import org.binas.station.ws.TestInitResponse;
 import org.binas.station.ws.TestPingResponse;
+import org.binas.station.ws.TestTimeoutResponse;
+import org.binas.station.ws.TimeoutInterruption_Exception;
 import org.binas.station.ws.UserNotExists_Exception;
 import org.binas.station.ws.UserReplicView;
 
@@ -53,6 +57,9 @@ public class StationClient implements StationPortType {
 
 	/** WS end point address */
 	private String wsURL = null; // default value is defined inside WSDL
+	
+	static final int CONN_TIMEOUT = 1000;
+	static final int RECV_TIMEOUT = 2000;
 
 	public String getWsURL() {
 		return wsURL;
@@ -68,6 +75,9 @@ public class StationClient implements StationPortType {
 	public void setVerbose(boolean verbose) {
 		this.verbose = verbose;
 	}
+	
+	public static int getConnectionTimeout() { return CONN_TIMEOUT; }
+	public static int getReceiveTimeout() { return RECV_TIMEOUT; }
 
 	/** constructor with provided web service URL */
 	public StationClient(String wsURL) throws StationClientException {
@@ -112,6 +122,23 @@ public class StationClient implements StationPortType {
 			Map<String, Object> requestContext = bindingProvider.getRequestContext();
 			requestContext.put(ENDPOINT_ADDRESS_PROPERTY, wsURL);
 			System.out.printf("Found service URL: %s%n", wsURL);
+			
+			final List<String> CONN_TIME_PROPS = new ArrayList<String>();
+            
+            CONN_TIME_PROPS.add("com.sun.xml.ws.connect.timeout");
+            CONN_TIME_PROPS.add("com.sun.xml.internal.ws.connect.timeout");
+            CONN_TIME_PROPS.add("javax.xml.ws.client.connectionTimeout");
+            
+            for (String propName : CONN_TIME_PROPS)
+                requestContext.put(propName, CONN_TIMEOUT);
+
+            final List<String> RECV_TIME_PROPS = new ArrayList<String>();
+            RECV_TIME_PROPS.add("com.sun.xml.ws.request.timeout");
+            RECV_TIME_PROPS.add("com.sun.xml.internal.ws.request.timeout");
+            RECV_TIME_PROPS.add("javax.xml.ws.client.receiveTimeout");
+
+            for (String propName : RECV_TIME_PROPS)
+                requestContext.put(propName, RECV_TIMEOUT);
 		}
 	}
 
@@ -208,6 +235,21 @@ public class StationClient implements StationPortType {
 	@Override
 	public Future<?> testPingAsync(String inputMessage, AsyncHandler<TestPingResponse> asyncHandler) {
 		return port.testPingAsync(inputMessage, asyncHandler);
+	}
+	
+	@Override
+	public void testTimeout(Integer timeToWait) throws TimeoutInterruption_Exception {
+		port.testTimeout(timeToWait);
+	}
+	
+	@Override
+	public Response<TestTimeoutResponse> testTimeoutAsync(Integer timeToWait) {
+		return port.testTimeoutAsync(timeToWait);
+	}
+
+	@Override
+	public Future<?> testTimeoutAsync(Integer timeToWait, AsyncHandler<TestTimeoutResponse> asyncHandler) {
+		return port.testTimeoutAsync(timeToWait, asyncHandler);
 	}
 	
 	@Override

@@ -3,6 +3,7 @@ package org.binas.ws.it;
 import static org.junit.Assert.*;
 
 import org.binas.ws.FullStation_Exception;
+import org.binas.ws.Internal_Exception;
 import org.binas.ws.InvalidStation_Exception;
 import org.binas.ws.NoBinaRented_Exception;
 import org.binas.ws.UserNotExists_Exception;
@@ -119,7 +120,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 	
 	@Test(expected = UserNotExists_Exception.class)
-	public void userNotExists() throws UserNotExists_Exception {
+	public void userNotExists() throws UserNotExists_Exception, Internal_Exception {
 		try {
 			client.returnBina(STATION1_ID, "invalid@email");
 		} catch (FullStation_Exception fse) {
@@ -132,7 +133,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 
 	@Test(expected = UserNotExists_Exception.class)
-	public void nullUser() throws UserNotExists_Exception {
+	public void nullUser() throws UserNotExists_Exception, Internal_Exception {
 		try {
 			client.returnBina(STATION1_ID, null);
 		} catch (FullStation_Exception fse) {
@@ -145,7 +146,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 
 	@Test(expected = UserNotExists_Exception.class)
-	public void emptyUser() throws UserNotExists_Exception {
+	public void emptyUser() throws UserNotExists_Exception, Internal_Exception {
 		try {
 			client.returnBina(STATION1_ID, "");
 		} catch (FullStation_Exception fse) {
@@ -158,7 +159,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 	
 	@Test(expected = InvalidStation_Exception.class)
-	public void invalidStation() throws InvalidStation_Exception {
+	public void invalidStation() throws InvalidStation_Exception, Internal_Exception {
 		try {
 			client.returnBina("example of invalid bina", EMAIL);
 		} catch (FullStation_Exception fse) {
@@ -171,7 +172,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 
 	@Test(expected = InvalidStation_Exception.class)
-	public void nullStation() throws InvalidStation_Exception {
+	public void nullStation() throws InvalidStation_Exception, Internal_Exception {
 		try {
 			client.returnBina(null, EMAIL);
 		} catch (FullStation_Exception fse) {
@@ -184,7 +185,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 
 	@Test(expected = InvalidStation_Exception.class)
-	public void emptyStation() throws InvalidStation_Exception {
+	public void emptyStation() throws InvalidStation_Exception, Internal_Exception {
 		try {
 			client.returnBina("", EMAIL);
 		} catch (FullStation_Exception fse) {
@@ -197,7 +198,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 	
 	@Test(expected = FullStation_Exception.class)
-	public void fullStation() throws FullStation_Exception {
+	public void fullStation() throws FullStation_Exception, Internal_Exception {
 		try {
 			client.returnBina(STATION3_ID, EMAIL);
 		} catch (InvalidStation_Exception ise) {
@@ -210,7 +211,7 @@ public class ReturnBinaIT extends BaseIT {
 	}
 	
 	@Test(expected = NoBinaRented_Exception.class)
-	public void noBinaRented() throws NoBinaRented_Exception {
+	public void noBinaRented() throws NoBinaRented_Exception, Internal_Exception {
 		try {
 			client.returnBina(STATION1_ID, EMAIL3);
 		} catch (InvalidStation_Exception ise) {

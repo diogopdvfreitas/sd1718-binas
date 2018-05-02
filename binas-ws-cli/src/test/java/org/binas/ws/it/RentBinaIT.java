@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import org.binas.ws.AlreadyHasBina_Exception;
 import org.binas.ws.BadInit_Exception;
 import org.binas.ws.EmailExists_Exception;
+import org.binas.ws.Internal_Exception;
 import org.binas.ws.InvalidEmail_Exception;
 import org.binas.ws.InvalidStation_Exception;
 import org.binas.ws.NoBinaAvail_Exception;
@@ -63,7 +64,7 @@ public class RentBinaIT extends BaseIT {
 	
 	@Test
 	public void alreadyHasBina() throws InvalidStation_Exception, NoBinaAvail_Exception,
-		NoCredit_Exception, UserNotExists_Exception {
+		NoCredit_Exception, UserNotExists_Exception, Internal_Exception {
 		int availableBinas1, availableBinas2, availableBinas3;
 		
 		try {
@@ -84,7 +85,7 @@ public class RentBinaIT extends BaseIT {
 	
 	@Test
 	public void invalidStation() throws AlreadyHasBina_Exception, NoBinaAvail_Exception,
-		NoCredit_Exception, UserNotExists_Exception, InvalidStation_Exception {
+		NoCredit_Exception, UserNotExists_Exception, InvalidStation_Exception, Internal_Exception {
 		int availableBinas1, availableBinas2, availableBinas3;
 		
 		try {
@@ -104,7 +105,7 @@ public class RentBinaIT extends BaseIT {
 	
 	@Test
 	public void nullStation() throws AlreadyHasBina_Exception, NoBinaAvail_Exception,
-		NoCredit_Exception, UserNotExists_Exception, InvalidStation_Exception {
+		NoCredit_Exception, UserNotExists_Exception, InvalidStation_Exception, Internal_Exception {
 		int availableBinas1, availableBinas2, availableBinas3;
 		
 		try {
@@ -124,7 +125,7 @@ public class RentBinaIT extends BaseIT {
 
 	@Test
 	public void emptyStation() throws AlreadyHasBina_Exception, NoBinaAvail_Exception,
-		NoCredit_Exception, UserNotExists_Exception, InvalidStation_Exception {
+		NoCredit_Exception, UserNotExists_Exception, InvalidStation_Exception, Internal_Exception {
 		int availableBinas1, availableBinas2, availableBinas3;
 		
 		try {
@@ -144,7 +145,7 @@ public class RentBinaIT extends BaseIT {
 
 	@Test
 	public void noBinasAvailable() throws BadInit_Exception, AlreadyHasBina_Exception,
-		InvalidStation_Exception, NoCredit_Exception, UserNotExists_Exception {
+		InvalidStation_Exception, NoCredit_Exception, UserNotExists_Exception, Internal_Exception {
 		int availableBinas1, availableBinas2, availableBinas3;
 		
 		try {
@@ -166,7 +167,7 @@ public class RentBinaIT extends BaseIT {
 	@Test
 	public void noCredit() throws NoCredit_Exception, EmailExists_Exception,
 		InvalidEmail_Exception, AlreadyHasBina_Exception, InvalidStation_Exception,
-		NoBinaAvail_Exception, UserNotExists_Exception, BadInit_Exception {
+		NoBinaAvail_Exception, UserNotExists_Exception, BadInit_Exception, Internal_Exception {
 		int availableBinas = 0, newAvailableBinas = 0;
 		UserView newUser = null;
 		
@@ -184,7 +185,7 @@ public class RentBinaIT extends BaseIT {
 	}
 
 	@Test(expected = UserNotExists_Exception.class)
-	public void userNotExists() throws UserNotExists_Exception {
+	public void userNotExists() throws UserNotExists_Exception, Internal_Exception {
 		try {
 			client.rentBina(STATION1_ID, "invalid@email");
 		} catch (NoBinaAvail_Exception nba) {
@@ -199,7 +200,7 @@ public class RentBinaIT extends BaseIT {
 	}
 	
 	@Test(expected = UserNotExists_Exception.class)
-	public void nullUser() throws UserNotExists_Exception {
+	public void nullUser() throws UserNotExists_Exception, Internal_Exception {
 		try {
 			client.rentBina(STATION1_ID, null);
 		} catch (NoBinaAvail_Exception nba) {
@@ -214,7 +215,7 @@ public class RentBinaIT extends BaseIT {
 	}
 	
 	@Test(expected = UserNotExists_Exception.class)
-	public void emptyUser() throws UserNotExists_Exception {
+	public void emptyUser() throws UserNotExists_Exception, Internal_Exception {
 		try {
 			client.rentBina(STATION1_ID, "");
 		} catch (NoBinaAvail_Exception nba) {

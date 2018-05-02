@@ -168,7 +168,7 @@ public class SetBalanceCallbackIT extends BaseIT {
 			setBalanceResponse.get();
 			fail("Should get an InvalidEMail_Exception, and did not");
 		} catch (ExecutionException e) {
-			assertEquals(InvalidEmail_Exception.class.getName(), e.getCause().getClass().getName());
+			assertTrue(e.getCause() instanceof InvalidEmail_Exception);
 		}
 	}
 	
@@ -184,7 +184,7 @@ public class SetBalanceCallbackIT extends BaseIT {
 			setBalanceResponse.get();
 			fail("Should get an InvalidEMail_Exception, and did not");
 		} catch (ExecutionException e) {
-			assertEquals(InvalidEmail_Exception.class.getName(), e.getCause().getClass().getName());
+			assertTrue(e.getCause() instanceof InvalidEmail_Exception);
 		}
 	}
 	
@@ -203,7 +203,7 @@ public class SetBalanceCallbackIT extends BaseIT {
 				setBalanceResponse.get();
 				fail("Should get an InvalidEMail_Exception, and did not");
 			} catch (ExecutionException e) {
-				assertEquals(InvalidEmail_Exception.class.getName(), e.getCause().getClass().getName());
+				assertTrue(e.getCause() instanceof InvalidEmail_Exception);
 
 				// record it and proceed
 				invalidEmails++;
@@ -227,7 +227,7 @@ public class SetBalanceCallbackIT extends BaseIT {
 			setBalanceResponse.get();
 			fail("Should get an InvalidEMail_Exception, and did not");
 		} catch (ExecutionException e) {
-			assertEquals(InvalidUserReplic_Exception.class.getName(), e.getCause().getClass().getName());
+			assertTrue(e.getCause() instanceof InvalidUserReplic_Exception);
 		}
 	}
 	

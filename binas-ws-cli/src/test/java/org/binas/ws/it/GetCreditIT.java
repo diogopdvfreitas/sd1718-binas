@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.binas.ws.EmailExists_Exception;
+import org.binas.ws.Internal_Exception;
 import org.binas.ws.InvalidEmail_Exception;
 import org.binas.ws.UserNotExists_Exception;
 import org.binas.ws.UserView;
@@ -22,7 +23,7 @@ public class GetCreditIT extends BaseIT {
 	}
 	
 	@Test
-	public void sucess() {
+	public void sucess() throws Internal_Exception {
 		int credit;
 		
 		try {
@@ -39,7 +40,7 @@ public class GetCreditIT extends BaseIT {
 	}
 	
 	@Test(expected = UserNotExists_Exception.class)
-	public void userNotExists() throws UserNotExists_Exception {
+	public void userNotExists() throws UserNotExists_Exception, Internal_Exception {
 		try {
 			client.activateUser(EMAIL);
 			client.getCredit(EMAIL1);
@@ -51,12 +52,12 @@ public class GetCreditIT extends BaseIT {
 	}
 	
 	@Test(expected = InvalidEmail_Exception.class)
-	public void nullEmail() throws EmailExists_Exception, InvalidEmail_Exception {
+	public void nullEmail() throws EmailExists_Exception, InvalidEmail_Exception, Internal_Exception {
 		client.activateUser(null);
 	}
 	
 	@Test(expected = InvalidEmail_Exception.class)
-	public void invalidEmail() throws EmailExists_Exception, InvalidEmail_Exception {
+	public void invalidEmail() throws EmailExists_Exception, InvalidEmail_Exception, Internal_Exception {
 		client.activateUser("");
 	}
 	

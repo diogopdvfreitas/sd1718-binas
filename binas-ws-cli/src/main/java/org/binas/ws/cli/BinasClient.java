@@ -15,6 +15,7 @@ import org.binas.ws.BinasService;
 import org.binas.ws.CoordinatesView;
 import org.binas.ws.EmailExists_Exception;
 import org.binas.ws.FullStation_Exception;
+import org.binas.ws.Internal_Exception;
 import org.binas.ws.InvalidEmail_Exception;
 import org.binas.ws.InvalidStation_Exception;
 import org.binas.ws.NoBinaAvail_Exception;
@@ -110,7 +111,7 @@ public class BinasClient implements BinasPortType {
 	// remote invocation methods ----------------------------------------------
 
 	@Override
-	public UserView activateUser(String email) throws EmailExists_Exception, InvalidEmail_Exception {
+	public UserView activateUser(String email) throws EmailExists_Exception, InvalidEmail_Exception, Internal_Exception {
 		return port.activateUser(email);
 	}
 	//
@@ -125,17 +126,17 @@ public class BinasClient implements BinasPortType {
 	}
 	
 	@Override
-	public void rentBina(String stationId, String email) throws AlreadyHasBina_Exception, InvalidStation_Exception, NoBinaAvail_Exception, NoCredit_Exception, UserNotExists_Exception {
+	public void rentBina(String stationId, String email) throws AlreadyHasBina_Exception, InvalidStation_Exception, NoBinaAvail_Exception, NoCredit_Exception, UserNotExists_Exception, Internal_Exception {
 		port.rentBina(stationId,email);
 	}
 	
 	@Override
-	public void returnBina(String stationId, String email) throws FullStation_Exception, InvalidStation_Exception, NoBinaRented_Exception, UserNotExists_Exception {
+	public void returnBina(String stationId, String email) throws FullStation_Exception, InvalidStation_Exception, NoBinaRented_Exception, UserNotExists_Exception, Internal_Exception {
 		port.returnBina(stationId,email);
 	}
 	//
 	@Override
-	public int getCredit(String email) throws UserNotExists_Exception {
+	public int getCredit(String email) throws UserNotExists_Exception, Internal_Exception {
 		return port.getCredit(email);
 	}
 

@@ -11,6 +11,7 @@ import org.binas.exception.AlreadyHasBinaException;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
 import org.binas.exception.FullStationException;
+import org.binas.exception.InternalException;
 import org.binas.exception.InvalidEmailException;
 import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
@@ -21,7 +22,7 @@ import org.binas.ws.BinasPortType;
 
 @WebService(
 		endpointInterface = "org.binas.ws.BinasPortType",
-		wsdlLocation = "binas.1_0.wsdl",
+		wsdlLocation = "binas.2_0.wsdl",
 		name = "BinasWebService",
 		portName = "BinasPort",
 		targetNamespace = "http://ws.binas.org/",
@@ -62,18 +63,20 @@ public class BinasPortImpl implements BinasPortType {
 	}
 
 	@Override
-	public int getCredit(String email) throws UserNotExists_Exception {
+	public int getCredit(String email) throws UserNotExists_Exception, Internal_Exception {
 		int credit = -1;
 		try {
 			credit = this.binasManager.getCredit(email);
 		} catch (UserNotExistsException une) {
 			throwUserNotExists("There isn't a user with that mail");
+		} catch (InternalException ie) {
+			throwInternal(ie.getMessage());
 		}
 		return credit;
 	}
 
 	@Override
-	public UserView activateUser(String email) throws EmailExists_Exception, InvalidEmail_Exception {
+	public UserView activateUser(String email) throws EmailExists_Exception, InvalidEmail_Exception, Internal_Exception {
 		UserView userView = null;
 		try {
 			User user = this.binasManager.createAndAddUser(email);
@@ -85,6 +88,8 @@ public class BinasPortImpl implements BinasPortType {
 			throwEmailExists("There's already a user registered with this email");
 		} catch (InvalidEmailException iee) {
 			throwInvalidEmail(iee.getMessage());
+		} catch (InternalException ie) {
+			throwInternal(ie.getMessage());
 		}
 
 		return userView;
@@ -92,7 +97,7 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public void rentBina(String stationId, String email) throws AlreadyHasBina_Exception, InvalidStation_Exception,
-			NoBinaAvail_Exception, NoCredit_Exception, UserNotExists_Exception {
+			NoBinaAvail_Exception, NoCredit_Exception, UserNotExists_Exception, Internal_Exception {
 		try {
 			this.binasManager.rentBina(stationId, email);
 		} catch (UserNotExistsException unee) {
@@ -105,12 +110,14 @@ public class BinasPortImpl implements BinasPortType {
 			throwNoBinaAvail("There are no available binas at this station (" + stationId + ")");
 		} catch (NoCreditException nce) {
 			throwNoCredit("User doesn't have enough credit to rent a bina");
+		} catch (InternalException ie) {
+			throwInternal(ie.getMessage());
 		}
 	}
 
 	@Override
 	public void returnBina(String stationId, String email)
-			throws FullStation_Exception, InvalidStation_Exception, NoBinaRented_Exception, UserNotExists_Exception {
+			throws FullStation_Exception, InvalidStation_Exception, NoBinaRented_Exception, UserNotExists_Exception, Internal_Exception {
 		try {
 			this.binasManager.returnBina(stationId, email);
 		} catch (FullStationException unee) {
@@ -121,6 +128,8 @@ public class BinasPortImpl implements BinasPortType {
 			throwUserNotExists("User with email '" + email + "' is not registered");
 		} catch (NoBinaRentedException nce) {
 			throwNoBina("User does not have a rented Bina");
+		} catch (InternalException ie) {
+			throwInternal(ie.getMessage());
 		}
 		
 	}
@@ -269,6 +278,12 @@ public class BinasPortImpl implements BinasPortType {
 		NoBinaRented faultInfo = new NoBinaRented();
 		faultInfo.setMessage(message);
 		throw new NoBinaRented_Exception(message, faultInfo);
+	}
+	
+	private void throwInternal(final String message) throws Internal_Exception {
+		Internal faultInfo = new Internal();
+		faultInfo.setMessage(message);
+		throw new Internal_Exception(message, faultInfo);
 	}
 
 }

@@ -112,6 +112,15 @@ public class StationPortImpl implements StationPortType {
 		builder.append(" from ").append(wsName);
 		return builder.toString();
 	}
+	
+	@Override
+	public void testTimeout(Integer timeToWait) throws TimeoutInterruption_Exception {
+		try {
+			Thread.sleep(timeToWait);
+		} catch (InterruptedException e) {
+			throwTimeoutInterruption(e.getMessage());
+		}
+	}
 
 	/** Return all station variables to default values. */
 	@Override
@@ -222,6 +231,14 @@ public class StationPortImpl implements StationPortType {
 		InvalidUserReplic faultInfo = new InvalidUserReplic();
 		faultInfo.message = message;
 		throw new InvalidUserReplic_Exception(message, faultInfo);
+	}
+
+	//
+	/** Helper to throw a new InvalidEmail exception. */
+	private void throwTimeoutInterruption(final String message) throws TimeoutInterruption_Exception {
+		TimeoutInterruption faultInfo = new TimeoutInterruption();
+		faultInfo.message = message;
+		throw new TimeoutInterruption_Exception(message, faultInfo);
 	}
 
 }

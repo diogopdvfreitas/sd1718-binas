@@ -74,7 +74,7 @@ public class GetBalanceCallbackIT extends BaseIT {
 			getBalanceResponse.get().getUserReplic();
 			fail("Should get a execution exception");
 		} catch (ExecutionException ee) {
-			assertEquals(UserNotExists_Exception.class.getName(), ee.getCause().getClass().getName());
+			assertTrue(ee.getCause() instanceof UserNotExists_Exception);
 		}
 	}
 	
@@ -107,7 +107,7 @@ public class GetBalanceCallbackIT extends BaseIT {
 			getBalanceResponse.get();
 			fail("Should get a UserNotExists_Exception");
 		} catch (ExecutionException e) {
-			assertEquals(UserNotExists_Exception.class.getName(), e.getCause().getClass().getName());
+			assertTrue(e.getCause() instanceof UserNotExists_Exception);
 		}
 	}
 	
@@ -123,7 +123,7 @@ public class GetBalanceCallbackIT extends BaseIT {
 			getBalanceResponse.get();
 			fail("Should get a UserNotExists_Exception");
 		} catch (ExecutionException e) {
-			assertEquals(UserNotExists_Exception.class.getName(), e.getCause().getClass().getName());
+			assertTrue(e.getCause() instanceof UserNotExists_Exception);
 		}
 	}
 	
@@ -139,7 +139,7 @@ public class GetBalanceCallbackIT extends BaseIT {
 			getBalanceResponse.get();
 			fail("Should get a UserNotExists_Exception");
 		} catch (ExecutionException e) {
-			assertEquals(UserNotExists_Exception.class.getName(), e.getCause().getClass().getName());
+			assertTrue(e.getCause() instanceof UserNotExists_Exception);
 		}
 	}
 	

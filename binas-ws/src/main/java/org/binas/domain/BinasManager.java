@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.xml.ws.AsyncHandler;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Response;
+import javax.xml.ws.WebServiceException;
 
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
@@ -24,6 +25,7 @@ import org.binas.exception.AlreadyHasBinaException;
 import org.binas.exception.BadInitException;
 import org.binas.exception.EmailExistsException;
 import org.binas.exception.FullStationException;
+import org.binas.exception.InternalException;
 import org.binas.exception.InvalidEmailException;
 import org.binas.exception.InvalidStationException;
 import org.binas.exception.NoBinaAvailException;
@@ -33,6 +35,7 @@ import org.binas.exception.UserNotExistsException;
 
 import org.binas.station.ws.BadInit_Exception;
 import org.binas.station.ws.GetBalanceResponse;
+import org.binas.station.ws.InvalidEmail_Exception;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.SetBalanceResponse;
@@ -40,6 +43,7 @@ import org.binas.station.ws.StationPortType;
 import org.binas.station.ws.StationService;
 import org.binas.station.ws.StationView;
 import org.binas.station.ws.TagView;
+import org.binas.station.ws.UserNotExists_Exception;
 import org.binas.station.ws.UserReplicView;
 
 import org.binas.ws.CoordinatesView;
@@ -69,6 +73,9 @@ public class BinasManager {
 	static Collection<Response<SetBalanceResponse>> setBalanceResponse = Collections.synchronizedList(new ArrayList<Response<SetBalanceResponse>>());
 	
 	private boolean verbose = false;
+	
+	static final int CONN_TIMEOUT = 1000;
+	static final int RECV_TIMEOUT = 2000;
 
 	/**
 	 * SingletonHolder is loaded on the first execution of Singleton.getInstance()
@@ -105,6 +112,23 @@ public class BinasManager {
 			BindingProvider bindingProvider = (BindingProvider) port;
 			Map<String, Object> requestContext = bindingProvider.getRequestContext();
 			requestContext.put(ENDPOINT_ADDRESS_PROPERTY, wsURL);
+			
+            final List<String> CONN_TIME_PROPS = new ArrayList<String>();
+            
+            CONN_TIME_PROPS.add("com.sun.xml.ws.connect.timeout");
+            CONN_TIME_PROPS.add("com.sun.xml.internal.ws.connect.timeout");
+            CONN_TIME_PROPS.add("javax.xml.ws.client.connectionTimeout");
+            
+            for (String propName : CONN_TIME_PROPS)
+                requestContext.put(propName, CONN_TIMEOUT);
+
+            final List<String> RECV_TIME_PROPS = new ArrayList<String>();
+            RECV_TIME_PROPS.add("com.sun.xml.ws.request.timeout");
+            RECV_TIME_PROPS.add("com.sun.xml.internal.ws.request.timeout");
+            RECV_TIME_PROPS.add("javax.xml.ws.client.receiveTimeout");
+
+            for (String propName : RECV_TIME_PROPS)
+                requestContext.put(propName, RECV_TIMEOUT);
 			
 			this.stations.add(port);
 			calculateQuorum();
@@ -215,7 +239,7 @@ public class BinasManager {
 	
 	// Manager logic  ---------------------------------------------------------
 	
-	public User createAndAddUser(String email) throws EmailExistsException, InvalidEmailException {
+	public User createAndAddUser(String email) throws EmailExistsException, InvalidEmailException, InternalException {
 		User user = new User(email);
 		
 		synchronized (this.users) {
@@ -229,7 +253,7 @@ public class BinasManager {
 		return user;		
 	}
 	
-	public int getCredit(String email) throws UserNotExistsException {
+	public int getCredit(String email) throws UserNotExistsException, InternalException {
 		return getBalance(email).getValue();
 	}
 
@@ -286,7 +310,7 @@ public class BinasManager {
 	}
 	
 	public synchronized void rentBina(String stationId, String email) throws AlreadyHasBinaException, InvalidStationException,
-		NoBinaAvailException, NoCreditException, UserNotExistsException {
+		NoBinaAvailException, NoCreditException, UserNotExistsException, InternalException {
 		User user = getUser(email);
 		
 		UserReplicView userReplic = getBalance(email);
@@ -308,7 +332,7 @@ public class BinasManager {
 	}
 	
 	public synchronized void returnBina(String stationId, String email) throws FullStationException, InvalidStationException,
-		NoBinaRentedException, UserNotExistsException {
+		NoBinaRentedException, UserNotExistsException, InternalException {
 		int bonus = 0;		
 		User user = getUser(email);
 		
@@ -367,14 +391,14 @@ public class BinasManager {
 		return stationsList.subList(0, numberOfStations);
 	}
 	
-	public UserReplicView getBalance(String email) throws UserNotExistsException {
+	public UserReplicView getBalance(String email) throws UserNotExistsException, InternalException {
 		UserReplicView user;
 		
 		while(!this.isGetBalanceFinished()) {
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
-				// TODO
+				throw new InternalException(e.getMessage());
 			}
 		}
 		
@@ -388,7 +412,7 @@ public class BinasManager {
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
-				// TODO
+				throw new InternalException(e.getMessage());
 			}
 		}
 		
@@ -397,7 +421,7 @@ public class BinasManager {
 		return user;
 	}
 	
-	public void setBalance(String email, int balance) throws InvalidEmailException {
+	public void setBalance(String email, int balance) throws InvalidEmailException, InternalException {
 		UserReplicView user = null;
 		TagView newTag = new TagView();
 		UserReplicView newUser = null;
@@ -426,7 +450,7 @@ public class BinasManager {
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
-				// TODO
+				throw new InternalException(e.getMessage());
 			}
 		}
 		
@@ -440,15 +464,8 @@ public class BinasManager {
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
-				// TODO
+				throw new InternalException(e.getMessage());
 			}
-		}
-		
-		try {
-			getBalance(email);
-		} catch (UserNotExistsException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 		
 		getSetBalanceResult();
@@ -488,8 +505,9 @@ public class BinasManager {
 		return false;
 	}
 	
-	private UserReplicView getGetBalanceResult() throws UserNotExistsException {
+	private UserReplicView getGetBalanceResult() throws UserNotExistsException, InternalException {
 		UserReplicView user, maxTagUser = null;
+		Throwable exception = null;
 		
 		synchronized (getBalanceResponse) {
 
@@ -502,37 +520,36 @@ public class BinasManager {
 					}
 					
 				} catch (InterruptedException e) {
-					// TODO generate callback error
+					throw new InternalException(e.getMessage());
 				} catch (ExecutionException e) {
-					// InvalidUserReplic_Exception is never caught because user is never null
+					exception = e.getCause();
 				}
 			}
 		}
 				
-		if (maxTagUser == null) throw new UserNotExistsException();
+		if (maxTagUser == null && exception instanceof UserNotExists_Exception) throw new UserNotExistsException();
+		if (maxTagUser == null && exception instanceof WebServiceException) throw new InternalException(exception.getMessage());
 				
 		return maxTagUser;
 	}
 	
-	private void getSetBalanceResult() throws InvalidEmailException {
-		boolean invalidEmail = true;
+	private void getSetBalanceResult() throws InvalidEmailException, InternalException {
+		Throwable exception = null;
 		
 		synchronized (setBalanceResponse) {
 			for(Response<SetBalanceResponse> response : setBalanceResponse) {
 				try {
 					response.get();
-					invalidEmail = false;
 				} catch (InterruptedException e) {
-					// TODO
-					e.printStackTrace();
+					throw new InternalException(e.getMessage());
 				} catch (ExecutionException e) {
-					// if an execution exception is caught, the invalidEmail value remains true
-					// but if not, then at least one of the responses didn't give an exception
+					exception = e.getCause();
 				}
 			}			
 		}
-				
-		if (invalidEmail) throw new InvalidEmailException();
+		
+		if (exception != null && exception instanceof InvalidEmail_Exception) throw new InvalidEmailException();
+		if (exception != null && exception instanceof WebServiceException) throw new InternalException(exception.getMessage());
 	}
 	
 	// Handlers for callback -------------------------------------------------------------

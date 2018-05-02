@@ -3,6 +3,7 @@ package org.binas.ws.it;
 import static org.junit.Assert.*;
 
 import org.binas.ws.EmailExists_Exception;
+import org.binas.ws.Internal_Exception;
 import org.binas.ws.InvalidEmail_Exception;
 import org.binas.ws.UserView;
 import org.junit.After;
@@ -24,7 +25,7 @@ public class ActivateUserIT extends BaseIT {
 	}
 
 	@Test
-	public void success() {
+	public void success() throws Internal_Exception {
 		try {
 			UserView userView = client.activateUser(EMAIL);
 			assertEquals(userView.getEmail(), EMAIL);
@@ -38,7 +39,7 @@ public class ActivateUserIT extends BaseIT {
 	}
 	
 	@Test(expected = EmailExists_Exception.class)
-	public void emailExists() throws EmailExists_Exception {
+	public void emailExists() throws EmailExists_Exception, Internal_Exception {
 		try {
 			client.activateUser(EMAIL);
 			client.activateUser(EMAIL);			
@@ -48,7 +49,7 @@ public class ActivateUserIT extends BaseIT {
 	}
 	
 	@Test
-	public void invalidEmailFormat() {
+	public void invalidEmailFormat() throws Internal_Exception {
 		int invalidEmails = 0;
 		
 		for (String email : invalidEmailExamples) {
@@ -66,7 +67,7 @@ public class ActivateUserIT extends BaseIT {
 	}
 	
 	@Test(expected = InvalidEmail_Exception.class)
-	public void nullEmail() throws EmailExists_Exception, InvalidEmail_Exception {
+	public void nullEmail() throws EmailExists_Exception, InvalidEmail_Exception, Internal_Exception {
 		client.activateUser(null);
 	}
 
