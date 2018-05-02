@@ -73,7 +73,8 @@
 				<configuration>
 					<!-- http://www.mojohaus.org/jaxws-maven-plugin/wsimport-mojo.html -->
 					<wsdlDirectory>${basedir}/src/main/resources</wsdlDirectory>
-				</configuration>
+                </configuration>
+				
 				<dependencies>
 					<dependency>
 						<groupId>com.sun.xml.ws</groupId>
@@ -98,6 +99,7 @@
 					<!-- to prevent deprecation warning: -->
 					<killAfter>-1</killAfter>
 					<mainClass>${mainclass}</mainClass>
+					<cleanupDaemonThreads>false</cleanupDaemonThreads>
 					<arguments>
 						<argument>${uddi.url}</argument>
 						<argument>${ws.name}</argument>

@@ -2,6 +2,7 @@ package org.binas.domain;
 
 import static javax.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,6 +68,7 @@ public class BinasManager {
 	private Collection<User> users = Collections.synchronizedSet(new HashSet<User>());
 	
 	private AtomicInteger quorum = new AtomicInteger(0);
+	private AtomicInteger requestCounter = new AtomicInteger(0);
 	
 	// from callbacks
 	static Collection<Response<GetBalanceResponse>> getBalanceResponse = Collections.synchronizedList(new ArrayList<Response<GetBalanceResponse>>());
@@ -393,30 +395,29 @@ public class BinasManager {
 	
 	public UserReplicView getBalance(String email) throws UserNotExistsException, InternalException {
 		UserReplicView user;
+		int counter;
 		
-		while(!this.isGetBalanceFinished()) {
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				throw new InternalException(e.getMessage());
+		synchronized (this.requestCounter) {
+			counter = this.requestCounter.incrementAndGet();
+		
+		
+			synchronized (this.stations) {
+				for (StationPortType station : this.stations) {
+					station.getBalanceAsync(email, getBalanceHandler(counter));					
+				}
 			}
+			
+			while (!this.isGetBalanceReady()) {
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					throw new InternalException(e.getMessage());
+				}
+			}
+			
+			user = getGetBalanceResult();
 		}
 		
-		synchronized (this.stations) {
-			for (StationPortType station : this.stations) {
-				station.getBalanceAsync(email, getBalanceHandler());					
-			}
-		}
-		
-		while (!this.isGetBalanceReady()) {
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				throw new InternalException(e.getMessage());
-			}
-		}
-		
-		user = getGetBalanceResult();
 				
 		return user;
 	}
@@ -425,6 +426,7 @@ public class BinasManager {
 		UserReplicView user = null;
 		TagView newTag = new TagView();
 		UserReplicView newUser = null;
+		int counter;
 		
 		try {
 			user = getBalance(email);
@@ -446,29 +448,34 @@ public class BinasManager {
 			newUser.setValue(balance);
 		}
 		
-		while(!this.isSetBalanceFinished()) {
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				throw new InternalException(e.getMessage());
+		synchronized(this.requestCounter) {
+			counter = requestCounter.incrementAndGet();
+		
+		
+			synchronized (this.stations) {
+				for (StationPortType station : this.stations) {
+					station.setBalanceAsync(email, newUser, setBalanceHandler(counter));
+				}
 			}
+			
+			while (!this.isSetBalanceReady()) {
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					throw new InternalException(e.getMessage());
+				}
+			}
+			
+			getSetBalanceResult();
 		}
 		
-		synchronized (this.stations) {
-			for (StationPortType station : this.stations) {
-				station.setBalanceAsync(email, newUser, setBalanceHandler());
-			}
-		}
 		
-		while (!this.isSetBalanceReady()) {
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				throw new InternalException(e.getMessage());
-			}
+		try {
+			user = getBalance(email);
+			if (user.getValue() != balance) setBalance(email, balance);
+		} catch (UserNotExistsException e) {
+			setBalance(email, balance);
 		}
-		
-		getSetBalanceResult();
 	}
 	
 	// Helpers -------------------------------------------------------------
@@ -487,22 +494,6 @@ public class BinasManager {
 	
 	private boolean isSetBalanceReady() {
 		return setBalanceResponse.size() >= getQuorum();
-	}
-	
-	private boolean isGetBalanceFinished() {
-		if (getBalanceResponse.size() == this.stations.size()) {
-			getBalanceResponse.clear();
-			return true;
-		} else if (getBalanceResponse.size() == 0) return true;
-		return false;
-	}
-	
-	private boolean isSetBalanceFinished() {
-		if (setBalanceResponse.size() == this.stations.size()) {
-			setBalanceResponse.clear();
-			return true;
-		} else if (setBalanceResponse.size() == 0) return true;
-		return false;
 	}
 	
 	private UserReplicView getGetBalanceResult() throws UserNotExistsException, InternalException {
@@ -525,10 +516,13 @@ public class BinasManager {
 					exception = e.getCause();
 				}
 			}
+			
+			getBalanceResponse.clear();
 		}
 				
 		if (maxTagUser == null && exception instanceof UserNotExists_Exception) throw new UserNotExistsException();
-		if (maxTagUser == null && exception instanceof WebServiceException) throw new InternalException(exception.getMessage());
+		if (maxTagUser == null && exception instanceof WebServiceException
+				&& exception.getCause() instanceof SocketTimeoutException) throw new InternalException(exception.getMessage());
 				
 		return maxTagUser;
 	}
@@ -545,29 +539,35 @@ public class BinasManager {
 				} catch (ExecutionException e) {
 					exception = e.getCause();
 				}
-			}			
+			}
+			
+			setBalanceResponse.clear();
 		}
 		
+		
 		if (exception != null && exception instanceof InvalidEmail_Exception) throw new InvalidEmailException();
-		if (exception != null && exception instanceof WebServiceException) throw new InternalException(exception.getMessage());
+		if (exception != null && exception instanceof WebServiceException
+				&& exception.getCause() instanceof SocketTimeoutException) throw new InternalException(exception.getMessage());
 	}
 	
 	// Handlers for callback -------------------------------------------------------------
-	private AsyncHandler<GetBalanceResponse> getBalanceHandler() {
+	private AsyncHandler<GetBalanceResponse> getBalanceHandler(int request) {
 		return new AsyncHandler<GetBalanceResponse>() {
 			@Override
 			public void handleResponse(Response<GetBalanceResponse> res) {
-				getBalanceResponse.add(res);
+				if (request == requestCounter.get()) {
+					getBalanceResponse.add(res);
+				}
 			}
 		};
 	}
 	
-	private AsyncHandler<SetBalanceResponse> setBalanceHandler() {
+	private AsyncHandler<SetBalanceResponse> setBalanceHandler(int request) {
 		return new AsyncHandler<SetBalanceResponse>() {
 			@Override
 			public void handleResponse(Response<SetBalanceResponse> res) {
-				synchronized (setBalanceResponse) {
-					setBalanceResponse.add(res);					
+				if (request == requestCounter.get()) {
+					setBalanceResponse.add(res);		
 				}
 			}
 		};
