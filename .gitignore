@@ -33,4 +33,4 @@ bin/
 
 # Maven
 target/
-/.metadata/
+**/.metadata/
