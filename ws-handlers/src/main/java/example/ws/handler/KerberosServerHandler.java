@@ -10,6 +10,7 @@ import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPHeader;
+import javax.xml.soap.SOAPHeaderElement;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
 import javax.xml.ws.handler.MessageContext;
@@ -19,6 +20,7 @@ import javax.xml.ws.handler.soap.SOAPMessageContext;
 import pt.ulisboa.tecnico.sdis.kerby.Auth;
 import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
 import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
+import pt.ulisboa.tecnico.sdis.kerby.RequestTime;
 import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
 import pt.ulisboa.tecnico.sdis.kerby.Ticket;
 
@@ -45,6 +47,9 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 	public static String user;
 	public static Key pass;
 	public static String server;
+	
+	private static Key sessionKey;
+	private static Auth auth;
 
 	//
 	// Handler interface implementation
@@ -73,7 +78,13 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 			if (outboundElement.booleanValue()) {
 				System.out.println("Writing header to OUTbound SOAP message...");
 				
-
+				// get SOAP envelope header
+				SOAPMessage msg = smc.getMessage();
+				SOAPPart sp = msg.getSOAPPart();
+				SOAPEnvelope se = sp.getEnvelope();
+				
+				generateRequestTimeHeader(se, auth);
+				
 			} else {
 				System.out.println("Reading header from INbound SOAP message...");
 
@@ -82,7 +93,6 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 				SOAPPart sp = msg.getSOAPPart();
 				SOAPEnvelope se = sp.getEnvelope();
 				SOAPHeader sh = se.getHeader();
-				
 
 				// check header
 				if (sh == null) {
@@ -90,42 +100,13 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 				} 
 				
 				Ticket ticket = getTicketFromHeader(se, sh);
-				System.out.printf("Key:\t%s\nT1:\t%s\nT2:\t%s\nX:\t%s\nY:\t%s\n\n",
-						printHexBinary(ticket.getKeyXY().getEncoded()),
-						ticket.getTime1(),
-						ticket.getTime2(),
-						ticket.getX(),
-						ticket.getY());
 				validateTicket(ticket);
 				
+				sessionKey = ticket.getKeyXY();
 				
-				Auth auth = getAuthFromHeader(se, sh, ticket.getKeyXY());
-				auth.validate();
-
-				/*sh.get
-
-				// get first header element
-				Name name = se.createName("myHeader", "d", "http://demo");
-				Iterator<?> it = sh.getChildElements(name);
-				// check header element
-				if (!it.hasNext()) {
-					System.out.println("Header element not found.");
-					return true;
-				}
-				SOAPElement element = (SOAPElement) it.next();
-
-				// get header element value
-				String valueString = element.getValue();
-				int value = Integer.parseInt(valueString);
-
-				// print received header
-				System.out.println("Header value is " + value);
-
-				// put header in a property context
-				smc.put(CONTEXT_PROPERTY, value);
-				// set property scope to application client/server class can
-				// access it
-				smc.setScope(CONTEXT_PROPERTY, Scope.APPLICATION);*/
+				auth = getAuthFromHeader(se, sh);
+				
+				validateAuth(auth);
 
 			}
 		} catch (Exception e) {
@@ -172,6 +153,24 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 		auth.validate();
 	}
 	
+	private void generateRequestTimeHeader(SOAPEnvelope se, Auth auth) throws SOAPException, KerbyException {
+		RequestTime requestTime = new RequestTime(auth.getTimeRequest());
+		CipheredView requestTimeCiphered = requestTime.cipher(sessionKey);
+		String hexEncodedRequestTime = printHexBinary(requestTimeCiphered.getData());
+		
+		// add header
+		SOAPHeader sh = se.getHeader();
+		if (sh == null)
+			sh = se.addHeader();
+		
+		// add header element (name, namespace prefix, namespace)
+		Name name = se.createName("requestTime", "kerby", "http://ws.binas.org/");
+		SOAPHeaderElement element = sh.addHeaderElement(name);
+
+		// add header element value
+		element.addTextNode(hexEncodedRequestTime);
+	}
+	
 	/* ============ Headers ============  */
 	
 	private Ticket getTicketFromHeader(SOAPEnvelope se, SOAPHeader sh) throws KerbyException, RuntimeException, SOAPException {
@@ -195,7 +194,7 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 		return ticket;
 	}
 	
-	private Auth getAuthFromHeader(SOAPEnvelope se, SOAPHeader sh, Key sessionKey) throws KerbyException, RuntimeException, SOAPException {
+	private Auth getAuthFromHeader(SOAPEnvelope se, SOAPHeader sh) throws KerbyException, RuntimeException, SOAPException {
 		Name name = se.createName("auth", "kerby", "http://ws.binas.org/");
 		Iterator<?> it = sh.getChildElements(name);
 		

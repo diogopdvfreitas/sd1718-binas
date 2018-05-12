@@ -14,7 +14,6 @@ import javax.xml.soap.SOAPHeaderElement;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
 import javax.xml.ws.handler.MessageContext;
-import javax.xml.ws.handler.MessageContext.Scope;
 import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
 
@@ -22,6 +21,7 @@ import pt.ulisboa.tecnico.sdis.kerby.Auth;
 import pt.ulisboa.tecnico.sdis.kerby.BadTicketRequest_Exception;
 import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
 import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
+import pt.ulisboa.tecnico.sdis.kerby.RequestTime;
 import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
 import pt.ulisboa.tecnico.sdis.kerby.SessionKey;
 import pt.ulisboa.tecnico.sdis.kerby.SessionKeyAndTicketView;
@@ -34,6 +34,7 @@ import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
+import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 
 /**
  * This SOAPHandler shows how to set/get values from headers in inbound/outbound
@@ -54,7 +55,9 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	public static String kerbyServer;
 	
 	private static SessionKey sessionKey;
-	private static CipheredView ticket;
+	private static CipheredView cipheredTicket;
+	private static long nounce;
+	private static RequestTime requestTime;
 	
 	private static final int VALID_DURATION = 30;
 	private static final SecureRandom randomGenerator = new SecureRandom();
@@ -78,7 +81,6 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	 */
 	@Override
 	public boolean handleMessage(SOAPMessageContext smc) {
-		CipheredView auth;
 
 		System.out.println("AddHeaderHandler: Handling message.");
 
@@ -88,7 +90,9 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 			if (outboundElement.booleanValue()) {
 				
 				requestSessionKeyAndTicket();
-				auth = generateAuth(); 
+				validateSessionKey();
+				
+				CipheredView auth = generateAuth(); 
 				
 				System.out.println("Writing header to OUTbound SOAP message...");
 				
@@ -118,29 +122,10 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 					System.out.println("Header not found.");
 					return true;
 				}
-
-				// get first header element
-				Name name = se.createName("myHeader", "d", "http://demo");
-				Iterator<?> it = sh.getChildElements(name);
-				// check header element
-				if (!it.hasNext()) {
-					System.out.println("Header element not found.");
-					return true;
-				}
-				SOAPElement element = (SOAPElement) it.next();
-
-				// get header element value
-				String valueString = element.getValue();
-				int value = Integer.parseInt(valueString);
-
-				// print received header
-				System.out.println("Header value is " + value);
-
-				// put header in a property context
-				smc.put(CONTEXT_PROPERTY, value);
-				// set property scope to application client/server class can
-				// access it
-				smc.setScope(CONTEXT_PROPERTY, Scope.APPLICATION);
+				
+				RequestTime requestTimeFromBinas = getRequestTimeFromHeader(se, sh);
+				
+				validateRequestTime(requestTimeFromBinas);
 
 			}
 		} catch (Exception e) {
@@ -172,13 +157,13 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	/* ============ Kerby helpers ============  */
 	
 	private void requestSessionKeyAndTicket() throws KerbyClientException, BadTicketRequest_Exception, KerbyException {
-		long nounce = randomGenerator.nextLong();
+		nounce = randomGenerator.nextLong();
 		
 		KerbyClient client = new KerbyClient(kerbyServer);
 		SessionKeyAndTicketView sessionAndTicket = client.requestTicket(user, server, nounce, VALID_DURATION);
 		
 		// saving ciphered ticket
-		ticket = sessionAndTicket.getTicket(); 
+		cipheredTicket = sessionAndTicket.getTicket();
 		
 		// decrypting and saving session key
 		CipheredView cipheredSessionKey = sessionAndTicket.getSessionKey();
@@ -187,10 +172,51 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	
 	private CipheredView generateAuth() throws KerbyException {
 		Auth auth = new Auth(user, new Date());
+		
+		requestTime = new RequestTime(auth.getTimeRequest());
+		requestTime.validate();
+		
 		return auth.cipher(sessionKey.getKeyXY());
 	}
 	
+	private void validateSessionKey() throws RuntimeException {
+		long nounceFromServer = sessionKey.getNounce();
+		
+		if (nounceFromServer != nounce) {
+			throw new RuntimeException("Invalid nounce");
+		}
+	}
+	
+	private void validateRequestTime(RequestTime requestTimeFromBinas) throws RuntimeException, KerbyException {
+		requestTimeFromBinas.validate();
+		if (!requestTimeFromBinas.equals(requestTime)) {
+			throw new RuntimeException("Invalid request time");
+		}
+	}
+	
 	/* ============ Headers ============  */
+	
+	private RequestTime getRequestTimeFromHeader(SOAPEnvelope se, SOAPHeader sh) throws SOAPException, KerbyException {
+		Name name = se.createName("requestTime", "kerby", "http://ws.binas.org/");
+		Iterator<?> it = sh.getChildElements(name);
+		
+		if (!it.hasNext()) {
+			System.out.println("Header element not found.");
+			throw new RuntimeException("Ticket not found");
+		}
+		
+		SOAPElement element = (SOAPElement) it.next();
+
+		String hexEncodedRequestTime = element.getValue();
+
+		CipheredView cipheredRequestTime = new CipheredView();
+		
+		cipheredRequestTime.setData(parseHexBinary(hexEncodedRequestTime));
+		
+		RequestTime requestTime = new RequestTime(cipheredRequestTime, sessionKey.getKeyXY());
+		
+		return requestTime;
+	}
 	
 	private void generateAuthHeader(SOAPEnvelope se, CipheredView auth) throws SOAPException {
 
@@ -220,7 +246,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 		SOAPHeaderElement element = sh.addHeaderElement(name);
 
 		// add header element value
-		String ticketHexEncoded = printHexBinary(ticket.getData());
+		String ticketHexEncoded = printHexBinary(cipheredTicket.getData());
 		element.addTextNode(ticketHexEncoded);
 	}
 	
