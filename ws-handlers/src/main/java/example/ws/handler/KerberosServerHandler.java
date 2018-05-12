@@ -42,14 +42,15 @@ import static javax.xml.bind.DatatypeConverter.parseHexBinary;
  */
 public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 	
-	public static final String CONTEXT_PROPERTY = "my.property";
+	public static final String TICKET = "kerby.ticket";
 	
-	public static String user;
-	public static Key pass;
-	public static String server;
+	private static String user;
+	private static Key pass;
 	
-	private static Key sessionKey;
-	private static Auth auth;
+	private Key sessionKey;
+	private Auth auth;
+	
+	private static final long TIME_VALIDATION_MARGIN = 2000; // milliseconds 
 
 	//
 	// Handler interface implementation
@@ -102,8 +103,10 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 				Ticket ticket = getTicketFromHeader(se, sh);
 				validateTicket(ticket);
 				
-				sessionKey = ticket.getKeyXY();
+				// put ticket in a property context
+				smc.put(TICKET, ticket);
 				
+				sessionKey = ticket.getKeyXY();
 				auth = getAuthFromHeader(se, sh);
 				
 				validateAuth(auth);
@@ -144,14 +147,21 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 			throw new RuntimeException("Ticket not valid --- expired");
 		}
 		
-		if (!ticket.getY().equals(server)) {
+		if (!ticket.getY().equals(user)) {
 			throw new RuntimeException("Ticket server does not match");
 		}
 	}
 	
-	private void validateAuth(Auth auth) throws KerbyException {
+	private void validateAuth(Auth auth) throws KerbyException, RuntimeException {
 		auth.validate();
-	}
+		RequestTime requestTime = new RequestTime(auth.getTimeRequest());
+		long requestTimeDate = requestTime.getTimeRequest().getTime();
+		long now = new Date().getTime();
+		
+		if (requestTimeDate > now + TIME_VALIDATION_MARGIN / 2 || requestTimeDate < now - TIME_VALIDATION_MARGIN / 2) {
+			throw new RuntimeException("Invalid request time");
+		}
+	}	
 	
 	private void generateRequestTimeHeader(SOAPEnvelope se, Auth auth) throws SOAPException, KerbyException {
 		RequestTime requestTime = new RequestTime(auth.getTimeRequest());
@@ -216,9 +226,8 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 	}
 	
 	/* ============ Static Setter ============  */
-	public static void setStaticKerbyProperties(String _user, String _pass, String _server) throws NoSuchAlgorithmException, InvalidKeySpecException {
+	public static void setStaticKerbyProperties(String _user, String _pass) throws NoSuchAlgorithmException, InvalidKeySpecException {
 		user = _user;
 		pass = SecurityHelper.generateKeyFromPassword(_pass);
-		server = _server;
 	}
 }

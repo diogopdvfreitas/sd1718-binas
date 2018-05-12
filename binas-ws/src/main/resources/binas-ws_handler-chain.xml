@@ -58,6 +58,10 @@
             <handler-class>example.ws.handler.KerberosServerHandler</handler-class>
         </handler>        
         
+        <handler>
+            <handler-class>example.ws.handler.EveSimulatorHandler</handler-class>
+        </handler>
+        
         <!-- After -->
         <handler>
             <handler-class>example.ws.handler.PrettyLogHandler</handler-class>

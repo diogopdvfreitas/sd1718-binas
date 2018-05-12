@@ -59,7 +59,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	private static long nounce;
 	private static RequestTime requestTime;
 	
-	private static final int VALID_DURATION = 30;
+	private static final int VALID_DURATION = 30; // 30 seconds
 	private static final SecureRandom randomGenerator = new SecureRandom();
 
 	//
@@ -82,19 +82,16 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	@Override
 	public boolean handleMessage(SOAPMessageContext smc) {
 
-		System.out.println("AddHeaderHandler: Handling message.");
-
 		Boolean outboundElement = (Boolean) smc.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
 
 		try {
 			if (outboundElement.booleanValue()) {
+				System.out.println("Writing header to OUTbound SOAP message...");
 				
 				requestSessionKeyAndTicket();
 				validateSessionKey();
 				
-				CipheredView auth = generateAuth(); 
-				
-				System.out.println("Writing header to OUTbound SOAP message...");
+				CipheredView auth = generateAuth(); 				
 				
 				// get SOAP envelope
 				SOAPMessage msg = smc.getMessage();

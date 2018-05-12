@@ -45,7 +45,7 @@ public class BinasApp {
 		server = kerberosProps.getProperty("server");
 		
 		try {
-			KerberosServerHandler.setStaticKerbyProperties(user, pass, server);
+			KerberosServerHandler.setStaticKerbyProperties(user, pass);
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
