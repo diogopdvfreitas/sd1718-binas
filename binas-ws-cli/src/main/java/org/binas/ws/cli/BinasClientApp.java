@@ -5,6 +5,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Properties;
 
+import org.binas.ws.EmailExists_Exception;
+import org.binas.ws.Internal_Exception;
+import org.binas.ws.InvalidEmail_Exception;
+
 import example.ws.handler.KerberosClientHandler;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
 
@@ -81,7 +85,14 @@ public class BinasClientApp {
 		System.out.println(BinasClientApp.class.getSimpleName() + " running");
 		
 		
-		client.testPing("Client");	
+		client.testPing("Client");
+		
+		try {
+			client.activateUser(user);
+		} catch (EmailExists_Exception | InvalidEmail_Exception | Internal_Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	 }
 }
 

@@ -71,13 +71,11 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 	 */
 	@Override
 	public boolean handleMessage(SOAPMessageContext smc) {
-		System.out.println("AddHeaderHandler: Handling message.");
 
 		Boolean outboundElement = (Boolean) smc.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
 
 		try {
 			if (outboundElement.booleanValue()) {
-				System.out.println("Writing header to OUTbound SOAP message...");
 				
 				// get SOAP envelope header
 				SOAPMessage msg = smc.getMessage();
@@ -87,7 +85,6 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 				generateRequestTimeHeader(se, auth);
 				
 			} else {
-				System.out.println("Reading header from INbound SOAP message...");
 
 				// get SOAP envelope header
 				SOAPMessage msg = smc.getMessage();

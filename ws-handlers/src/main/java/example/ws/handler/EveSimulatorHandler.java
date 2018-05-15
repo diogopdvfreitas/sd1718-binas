@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import javax.xml.namespace.QName;
+import javax.xml.soap.MessageFactory;
 import javax.xml.soap.Name;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPEnvelope;
@@ -15,10 +16,22 @@ import javax.xml.soap.SOAPHeader;
 import javax.xml.soap.SOAPHeaderElement;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.handler.MessageContext.Scope;
 import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
 import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
@@ -59,7 +72,7 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 
 		try {
 			if (!outboundElement.booleanValue()) {
-				System.out.println("\n-------------------- SNIFF SNIFF I AM EVE AND I AM EVIL SNIFF SNIFF --------------------");
+				System.out.println("\n-------------------- SNIFF SNIFF I AM EVE AND I AM EVIL SNIFF SNIFF --------------------\n");
 				
 				// Message IN
 				// Simulate man in the middle
@@ -78,7 +91,9 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 				CipheredView cipheredTicket = getCipheredTicketFromHeader(se, sh);
 				System.out.println("Got ciphered ticket: " + printHexBinary(cipheredTicket.getData()));
 
-				System.out.println("------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
+				Document document = SOAPMessageToDOMDocument(msg);
+				
+				System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 			}
 		} catch (Exception e) {
 			System.out.print("Caught exception in handleMessage: ");
@@ -107,6 +122,25 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 		cipheredTicket.setData(parseHexBinary(hexEncodedTicket));
 		return cipheredTicket;
 	}
+	
+	private SOAPMessage DOMDocumentToSOAPMessage(Document doc) throws Exception {
+        SOAPMessage newMsg = null;
+
+        MessageFactory mf = MessageFactory.newInstance();
+        newMsg = mf.createMessage();
+        SOAPPart soapPart = newMsg.getSOAPPart();
+        soapPart.setContent(new DOMSource(doc));
+
+        return newMsg;
+    }
+	
+	private static Document SOAPMessageToDOMDocument(SOAPMessage msg) throws Exception {
+
+        // SOAPPart implements org.w3c.dom.Document interface
+        Document part = msg.getSOAPPart();
+
+        return part;
+    }
 
 	/** The handleFault method is invoked for fault message processing. */
 	@Override
