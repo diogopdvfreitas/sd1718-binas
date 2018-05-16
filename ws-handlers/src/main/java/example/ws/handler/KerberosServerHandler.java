@@ -238,7 +238,6 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 		System.out.println("Key: " + printHexBinary(ticket.getKeyXY().getEncoded()));
 		System.out.println("T1:  " + ticket.getTime1() + " (" + ticket.getTime1().getTime() + " ms)");
 		System.out.println("T2:  " + ticket.getTime2() + " (" + ticket.getTime2().getTime() + " ms)");
-		System.out.println();
-		System.out.println("\n================================");
+		System.out.println("================================\n");
 	}
 }
