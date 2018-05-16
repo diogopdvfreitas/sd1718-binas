@@ -85,11 +85,16 @@ public class BinasClientApp {
 		System.out.println(BinasClientApp.class.getSimpleName() + " running");
 		
 		
-		client.testPing("Client");
 		
 		try {
+			client.testPing("Client");
 			client.activateUser(user);
-		} catch (EmailExists_Exception | InvalidEmail_Exception | Internal_Exception e) {
+			Thread.sleep(16000); // 16 sec
+			client.testPing("Client");
+			Thread.sleep(16000); // 16 sec
+			client.testPing("Client");
+
+		} catch (EmailExists_Exception | InvalidEmail_Exception | Internal_Exception | InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

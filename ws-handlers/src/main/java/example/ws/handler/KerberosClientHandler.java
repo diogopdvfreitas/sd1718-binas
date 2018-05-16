@@ -25,6 +25,7 @@ import pt.ulisboa.tecnico.sdis.kerby.RequestTime;
 import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
 import pt.ulisboa.tecnico.sdis.kerby.SessionKey;
 import pt.ulisboa.tecnico.sdis.kerby.SessionKeyAndTicketView;
+import pt.ulisboa.tecnico.sdis.kerby.TicketCollection;
 import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClient;
 import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClientException;
 
@@ -54,8 +55,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	public static String server;
 	public static String kerbyServer;
 	
-	private static SessionKey sessionKey;
-	private static CipheredView cipheredTicket;
+	private static TicketCollection tickets = new TicketCollection(5000); // 5 seconds
 	private static long nounce;
 	private static RequestTime requestTime;
 	
@@ -81,6 +81,10 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	 */
 	@Override
 	public boolean handleMessage(SOAPMessageContext smc) {
+		SessionKeyAndTicketView sessionAndTicket;
+		SessionKey sessionKey;
+		CipheredView cipheredTicket;
+		CipheredView cipheredSessionKey;
 
 		Boolean outboundElement = (Boolean) smc.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
 
@@ -88,10 +92,18 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 			if (outboundElement.booleanValue()) {
 				System.out.println("Writing header to OUTbound SOAP message...");
 				
-				requestSessionKeyAndTicket();
-				validateSessionKey();
+				sessionAndTicket = getSessionKeyAndTicket();
 				
-				CipheredView auth = generateAuth(); 				
+				// saving ciphered ticket
+				cipheredTicket = sessionAndTicket.getTicket();
+				
+				// decrypting and saving session key
+				cipheredSessionKey = sessionAndTicket.getSessionKey();
+				sessionKey = new SessionKey(cipheredSessionKey, pass);
+				
+				validateSessionKey(sessionKey);
+				
+				CipheredView auth = generateAuth(sessionKey); 				
 				
 				// get SOAP envelope
 				SOAPMessage msg = smc.getMessage();
@@ -102,7 +114,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 				generateAuthHeader(se, auth);
 				
 				// add ticket header
-				generateTicketHeader(se);
+				generateTicketHeader(se, cipheredTicket);
 				
 				// put session key in a property context
 				smc.put(SESSION_KEY, sessionKey);
@@ -155,21 +167,25 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	
 	/* ============ Kerby helpers ============  */
 	
-	private void requestSessionKeyAndTicket() throws KerbyClientException, BadTicketRequest_Exception, KerbyException {
+	private SessionKeyAndTicketView getSessionKeyAndTicket() throws KerbyClientException, BadTicketRequest_Exception, KerbyException {
+		SessionKeyAndTicketView sessionKeyAndTicket = tickets.getTicket(server);
+		
+		if (sessionKeyAndTicket != null) {
+			return sessionKeyAndTicket;
+		}
+		
 		nounce = randomGenerator.nextLong();
 		
 		KerbyClient client = new KerbyClient(kerbyServer);
-		SessionKeyAndTicketView sessionAndTicket = client.requestTicket(user, server, nounce, VALID_DURATION);
+		sessionKeyAndTicket = client.requestTicket(user, server, nounce, VALID_DURATION);
 		
-		// saving ciphered ticket
-		cipheredTicket = sessionAndTicket.getTicket();
+		long now = new Date().getTime();
+		tickets.storeTicket(server, sessionKeyAndTicket, now + VALID_DURATION * 1000 / 2);
 		
-		// decrypting and saving session key
-		CipheredView cipheredSessionKey = sessionAndTicket.getSessionKey();
-		sessionKey = new SessionKey(cipheredSessionKey, pass);
+		return sessionKeyAndTicket;
 	}
 	
-	private CipheredView generateAuth() throws KerbyException {
+	private CipheredView generateAuth(SessionKey sessionKey) throws KerbyException {
 		Auth auth = new Auth(user, new Date());
 		
 		requestTime = new RequestTime(auth.getTimeRequest());
@@ -178,7 +194,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 		return auth.cipher(sessionKey.getKeyXY());
 	}
 	
-	private void validateSessionKey() throws RuntimeException {
+	private void validateSessionKey(SessionKey sessionKey) throws RuntimeException {
 		long nounceFromServer = sessionKey.getNounce();
 		
 		if (nounceFromServer != nounce) {
@@ -195,7 +211,9 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	
 	/* ============ Headers ============  */
 	
-	private RequestTime getRequestTimeFromHeader(SOAPEnvelope se, SOAPHeader sh) throws SOAPException, KerbyException {
+	private RequestTime getRequestTimeFromHeader(SOAPEnvelope se, SOAPHeader sh) throws SOAPException,
+		KerbyException, RuntimeException {
+		
 		Name name = se.createName("requestTime", "kerby", "http://ws.binas.org/");
 		Iterator<?> it = sh.getChildElements(name);
 		
@@ -205,13 +223,18 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 		}
 		
 		SOAPElement element = (SOAPElement) it.next();
-
 		String hexEncodedRequestTime = element.getValue();
 
 		CipheredView cipheredRequestTime = new CipheredView();
-		
 		cipheredRequestTime.setData(parseHexBinary(hexEncodedRequestTime));
 		
+		SessionKeyAndTicketView sessionKeyAndTicket = tickets.getTicket(server);
+		
+		if (sessionKeyAndTicket == null) {
+			throw new RuntimeException("Session expired");
+		}
+		
+		SessionKey sessionKey = new SessionKey(sessionKeyAndTicket.getSessionKey(), pass);
 		RequestTime requestTime = new RequestTime(cipheredRequestTime, sessionKey.getKeyXY());
 		
 		return requestTime;
@@ -233,7 +256,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 		element.addTextNode(authHexEncoded);
 	}
 	
-	private void generateTicketHeader(SOAPEnvelope se) throws SOAPException {
+	private void generateTicketHeader(SOAPEnvelope se, CipheredView cipheredTicket) throws SOAPException {
 
 		// add header
 		SOAPHeader sh = se.getHeader();

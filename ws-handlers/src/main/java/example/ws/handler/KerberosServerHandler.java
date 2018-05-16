@@ -147,6 +147,8 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 		if (!ticket.getY().equals(user)) {
 			throw new RuntimeException("Ticket server does not match");
 		}
+		
+		printTicket(ticket);
 	}
 	
 	private void validateAuth(Auth auth) throws KerbyException, RuntimeException {
@@ -226,5 +228,17 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 	public static void setStaticKerbyProperties(String _user, String _pass) throws NoSuchAlgorithmException, InvalidKeySpecException {
 		user = _user;
 		pass = SecurityHelper.generateKeyFromPassword(_pass);
+	}
+	
+	/* ============ Helpers ============  */
+	private void printTicket(Ticket ticket) {
+		System.out.println("\n============ TICKET ============");
+		System.out.println("X:   " + ticket.getX());
+		System.out.println("Y:   " + ticket.getX());
+		System.out.println("Key: " + printHexBinary(ticket.getKeyXY().getEncoded()));
+		System.out.println("T1:  " + ticket.getTime1() + " (" + ticket.getTime1().getTime() + " ms)");
+		System.out.println("T2:  " + ticket.getTime2() + " (" + ticket.getTime2().getTime() + " ms)");
+		System.out.println();
+		System.out.println("\n================================");
 	}
 }
