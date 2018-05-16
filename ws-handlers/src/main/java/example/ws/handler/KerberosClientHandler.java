@@ -47,7 +47,7 @@ import static javax.xml.bind.DatatypeConverter.parseHexBinary;
  */
 public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	
-	public static final String CONTEXT_PROPERTY = "my.property";
+	public static final String SESSION_KEY = "kerby.sessionKey";
 	
 	public static String user;
 	public static Key pass;
@@ -104,6 +104,8 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 				// add ticket header
 				generateTicketHeader(se);
 				
+				// put session key in a property context
+				smc.put(SESSION_KEY, sessionKey);
 
 			} else {
 				System.out.println("Reading header from INbound SOAP message...");
