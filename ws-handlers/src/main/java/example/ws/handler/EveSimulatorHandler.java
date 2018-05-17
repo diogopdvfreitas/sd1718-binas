@@ -33,6 +33,7 @@ import org.w3c.dom.NodeList;
 public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 	
 	private final String XPATH_ACTIVATE_USER = "//SOAP-ENV:Envelope/SOAP-ENV:Body/ns2:activateUser/email/text()";
+	private final String XPATH_REQUEST_TIME = "//SOAP-ENV:Envelope/SOAP-ENV:Header/kerby:requestTime/text()";
 	private final String EVE_EMAIL = "eve@A37.binas.org";
 	private static boolean TO_SERVER = false;
 
@@ -66,15 +67,24 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 					// Simulate man in the middle
 					
 					SOAPMessage msg = smc.getMessage();
-					SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_ACTIVATE_USER, EVE_EMAIL);
-					
+					// SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_ACTIVATE_USER, EVE_EMAIL);
+					SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_REQUEST_TIME, EVE_EMAIL);
 					if (newMsg != null) {
 						msg = newMsg;
 					}
 					
 					System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");					
 				} else {
+					System.out.println("\n-------------------- I AM EVE: CAUGHT MESSAGE BEFORE SERVER--------------------\n");
 					
+					SOAPMessage msg = smc.getMessage();
+					
+					SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_REQUEST_TIME, EVE_EMAIL);
+					if (newMsg != null) {
+						msg = newMsg;
+					}
+					
+					System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 				}
 			}
 		} catch (Exception e) {
@@ -103,7 +113,8 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
         Object result = expr.evaluate(document, XPathConstants.NODESET);
         NodeList nodes = (NodeList) result;
         
-        if (nodes.getLength() > 1 || nodes.getLength() == 0 || nodes.item(0).getNodeValue().length() == 0) {
+        if (nodes.getLength() > 1 || nodes.getLength() == 0 ||
+        		nodes.item(0).getNodeValue() == null || nodes.item(0).getNodeValue().length() == 0) {
         	return null;
         }
         
@@ -143,6 +154,7 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
                 if (prefix == null) throw new NullPointerException("Null prefix");
                 else if ("SOAP-ENV".equals(prefix)) return "http://schemas.xmlsoap.org/soap/envelope/";
                 else if ("ns2".equals(prefix)) return "http://ws.binas.org/";
+                else if ("kerby".equals(prefix)) return "http://ws.binas.org/";
                 else if ("schema".equals(prefix)) return "http://www.w3.org/2001/XMLSchema-instance";
                 else if ("xml".equals(prefix)) return XMLConstants.XML_NS_URI;
                 return XMLConstants.NULL_NS_URI;

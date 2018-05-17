@@ -55,12 +55,16 @@
         </handler>
         
         <handler>
-            <handler-class>example.ws.handler.MACHandler</handler-class>
+            <handler-class>example.ws.handler.MACValidatorHandler</handler-class>
         </handler>
         
         <handler>
             <handler-class>example.ws.handler.KerberosServerHandler</handler-class>
-        </handler>        
+        </handler>
+        
+        <handler>
+            <handler-class>example.ws.handler.MACGeneratorHandler</handler-class>
+        </handler>
         
         <!-- After -->
         <handler>

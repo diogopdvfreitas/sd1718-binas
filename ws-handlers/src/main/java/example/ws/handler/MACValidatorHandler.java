@@ -8,12 +8,10 @@ import java.util.Set;
 
 import javax.xml.namespace.QName;
 import javax.xml.soap.Name;
-import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPHeader;
-import javax.xml.soap.SOAPHeaderElement;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
 import javax.xml.transform.TransformerFactory;
@@ -30,60 +28,21 @@ import java.security.Key;
 import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
-public class MACHandler  implements SOAPHandler<SOAPMessageContext>{
+public class MACValidatorHandler  implements SOAPHandler<SOAPMessageContext>{
 	
 	@Override
-	public boolean handleMessage(SOAPMessageContext smc) {
+	public boolean handleMessage(SOAPMessageContext smc) {		
 		
 		Boolean outboundElement = (Boolean) smc.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
 		
 		try {
-			if (outboundElement.booleanValue()) {
-				
-				// get SOAP envelope
-				SOAPMessage msg = smc.getMessage();
-				SOAPPart sp = msg.getSOAPPart();
-				SOAPEnvelope se = sp.getEnvelope();
-				SOAPBody sb = se.getBody();
-				
-				DOMSource source = new DOMSource(sb);
-				StringWriter stringResult = new StringWriter();
-				TransformerFactory.newInstance().newTransformer().transform(source, new StreamResult(stringResult));
-				String message = stringResult.toString();
-				
-				Key sessionKey = (Key) smc.get(KerberosClientHandler.SESSION_KEY);
-				String sessionKeyHexEncoded = printHexBinary(sessionKey.getEncoded());
-				String result = message + sessionKeyHexEncoded;
-				
-				MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-				messageDigest.update(result.getBytes());
-				byte[] hmac = messageDigest.digest();
-				
-				generateMACHeader(se, hmac);
-				
-			} else {
+			if (!outboundElement.booleanValue()) {
 				
 				// get SOAP envelope header
 				SOAPMessage msg = smc.getMessage();
 				SOAPPart sp = msg.getSOAPPart();
 				SOAPEnvelope se = sp.getEnvelope();
-				SOAPBody sb = se.getBody();
 				SOAPHeader sh = se.getHeader();
-				
-				DOMSource source = new DOMSource(sb);
-				StringWriter stringResult = new StringWriter();
-				TransformerFactory.newInstance().newTransformer().transform(source, new StreamResult(stringResult));
-				String message = stringResult.toString();
-				
-				Key sessionKey = (Key) smc.get(KerberosClientHandler.SESSION_KEY);
-				String sessionKeyHexEncoded = printHexBinary(sessionKey.getEncoded());
-				String result = message + sessionKeyHexEncoded;
-				
-				MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-				messageDigest.update(result.getBytes());
-				byte[] hmac = messageDigest.digest();
-				
-				generateMACHeader(se, hmac);
 				
 				// check header
 				if (sh == null) {
@@ -91,6 +50,39 @@ public class MACHandler  implements SOAPHandler<SOAPMessageContext>{
 				} 
 				
 				byte[] hmacFromClient = getMACFromHeader(se, sh);
+				
+				Iterator<?> it = sh.getChildElements();
+				
+				if (!it.hasNext()) {
+					System.out.println("Header element not found.");
+					throw new RuntimeException("Header not found");
+				}
+				
+				SOAPElement element;
+				element = (SOAPElement) it.next();
+				while (true) {
+					if (element.getLocalName().equals(MACGeneratorHandler.MAC_NAME)) {
+						sh.removeChild(element);
+						break;
+					}
+					element = (SOAPElement) it.next();
+				}
+				
+				// sh now does not have the MAC
+				
+				DOMSource source = new DOMSource(se); // using the envelope without the MAC header
+				StringWriter stringResult = new StringWriter();
+				TransformerFactory.newInstance().newTransformer().transform(source, new StreamResult(stringResult));
+				String message = stringResult.toString();
+												
+				Key sessionKey = (Key) smc.get(KerberosClientHandler.SESSION_KEY);
+
+				String sessionKeyHexEncoded = printHexBinary(sessionKey.getEncoded());
+				String result = message + sessionKeyHexEncoded;
+				
+				MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+				messageDigest.update(result.getBytes());
+				byte[] hmac = messageDigest.digest();				
 								
 				boolean messageIntegrity =  Arrays.equals(hmac, hmacFromClient);
 				
@@ -108,22 +100,6 @@ public class MACHandler  implements SOAPHandler<SOAPMessageContext>{
 		}
 		
 		return true;
-	}
-		
-	private void generateMACHeader(SOAPEnvelope se, byte[] hmac) throws SOAPException {
-		
-		// add header
-		SOAPHeader sh = se.getHeader();
-		if (sh == null)
-			sh = se.addHeader();
-		
-		// add header element (name, namespace prefix, namespace)
-		Name name = se.createName("MAC", "kerby", "http://ws.binas.org/");
-		SOAPHeaderElement element = sh.addHeaderElement(name);
-
-		// add header element value
-		String authHexEncoded = printHexBinary(hmac);
-		element.addTextNode(authHexEncoded);
 	}
 	
 	private byte[] getMACFromHeader(SOAPEnvelope se, SOAPHeader sh) throws KerbyException, RuntimeException, SOAPException {
