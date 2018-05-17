@@ -97,9 +97,8 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 
 					// Message IN to client
 					
-					SOAPMessage msg = smc.getMessage();
-					
 					// changeRequestTime(smc);
+					// changeActivateUserEmail(smc);
 					
 					System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 				}
