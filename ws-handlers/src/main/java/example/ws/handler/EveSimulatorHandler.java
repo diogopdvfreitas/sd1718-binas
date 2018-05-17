@@ -89,7 +89,7 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 					// Message IN to server
 
 					// changeActivateUserEmail(smc);
-					changeAuthAndTicket(smc);
+					// changeAuthAndTicket(smc);
 					
 					System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 				} else {

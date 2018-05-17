@@ -108,6 +108,9 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 				
 				// put session key in a property context
 				smc.put(KerberosClientHandler.SESSION_KEY, sessionKey);
+				smc.put(TICKET, ticket);
+				
+				// put ticket in a property context
 				
 				auth = getAuthFromHeader(se, sh);
 				

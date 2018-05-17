@@ -88,7 +88,7 @@ public class BinasClientApp {
 		
 		//client.testPing("Client");
 		try {
-			client.activateUser(kerberosProps.getProperty("user2"));
+			client.activateUser(user);
 		} catch (EmailExists_Exception | InvalidEmail_Exception | Internal_Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
