@@ -106,7 +106,12 @@ public class MACHandler  implements SOAPHandler<SOAPMessageContext>{
 				smc.put(byte[], hmacFromClient);
 				*/
 				
-				return Arrays.equals(hmac, hmacFromClient);
+				boolean messageIntegrity =  Arrays.equals(hmac, hmacFromClient);
+				
+				if(!messageIntegrity) { 
+					System.out.println("MAC aren´t the same");
+					throw new RuntimeException();
+				}
 			}
 			
 		} catch (Exception e) {
