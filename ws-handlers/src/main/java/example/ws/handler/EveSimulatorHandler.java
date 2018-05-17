@@ -1,5 +1,8 @@
 package example.ws.handler;
 
+import java.security.Key;
+import java.security.SecureRandom;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -21,6 +24,19 @@ import javax.xml.xpath.XPathFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import pt.ulisboa.tecnico.sdis.kerby.Auth;
+import pt.ulisboa.tecnico.sdis.kerby.BadTicketRequest_Exception;
+import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
+import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
+import pt.ulisboa.tecnico.sdis.kerby.RequestTime;
+import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
+import pt.ulisboa.tecnico.sdis.kerby.SessionKey;
+import pt.ulisboa.tecnico.sdis.kerby.SessionKeyAndTicketView;
+import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClient;
+import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClientException;
+
+import static javax.xml.bind.DatatypeConverter.printHexBinary;
+
 /**
  * This SOAPHandler shows how to set/get values from headers in inbound/outbound
  * SOAP messages.
@@ -34,7 +50,14 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 	
 	private final String XPATH_ACTIVATE_USER = "//SOAP-ENV:Envelope/SOAP-ENV:Body/ns2:activateUser/email/text()";
 	private final String XPATH_REQUEST_TIME = "//SOAP-ENV:Envelope/SOAP-ENV:Header/kerby:requestTime/text()";
+	private final String XPATH_TICKET = "//SOAP-ENV:Envelope/SOAP-ENV:Header/kerby:ticket/text()";
+	private final String XPATH_AUTH = "//SOAP-ENV:Envelope/SOAP-ENV:Header/kerby:auth/text()";
+	private final NamespaceContext NAMESPACE_CONTEXT = getNamespaceContext();
+	
 	private final String EVE_EMAIL = "eve@A37.binas.org";
+	private final String EVE_PASS = "W8xWoC6xM";
+	private final String KERBY_SERVER = "http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
+	private final String SERVER = "binas@A37.binas.org";
 	private static boolean TO_SERVER = false;
 
 	//
@@ -59,33 +82,28 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 		Boolean outboundElement = (Boolean) smc.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
 
 		try {
-			System.out.println("\n------------------------------- I AM EVE: CAUGHT MESSAGE -------------------------------\n");
 			if (!outboundElement.booleanValue()) {
 				if (TO_SERVER) {
+					System.out.println("\n------------------------------- I AM EVE: CAUGHT MESSAGE -------------------------------\n");
 					
-					// Message IN
-					// Simulate man in the middle
+					// Message IN to server
+
+					// changeActivateUserEmail(smc);
+					changeAuthAndTicket(smc);
+					
+					System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
+				} else {
+					System.out.println("\n------------------------------- I AM EVE: CAUGHT MESSAGE -------------------------------\n");
+
+					// Message IN to client
 					
 					SOAPMessage msg = smc.getMessage();
-					// SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_ACTIVATE_USER, EVE_EMAIL);
-					SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_REQUEST_TIME, EVE_EMAIL);
-					if (newMsg != null) {
-						msg = newMsg;
-					}
 					
-				} else {					
-					SOAPMessage msg = smc.getMessage();
+					// changeRequestTime(smc);
 					
-					/*
-					SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_REQUEST_TIME, EVE_EMAIL);
-					if (newMsg != null) {
-						msg = newMsg;
-					}
-					*/
-					
+					System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 				}
 			}
-			System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 		} catch (Exception e) {
 			System.out.print("Caught exception in handleMessage: ");
 			System.out.println(e);
@@ -97,6 +115,42 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 	
 	/* ------------ Tempering helpers --------------- */
 	
+	private void changeAuthAndTicket(SOAPMessageContext smc) throws Exception {
+		SOAPMessage msg = smc.getMessage();
+		
+		SessionKeyAndTicketView sessionKeyAndTicket = getValidSessionKeyAndTicket();
+		
+		CipheredView cipheredTicket = sessionKeyAndTicket.getTicket();
+		
+		SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_TICKET, printHexBinary(cipheredTicket.getData()));
+		
+		CipheredView cipheredSessionKey = sessionKeyAndTicket.getSessionKey();
+		
+		Key pass = SecurityHelper.generateKeyFromPassword(EVE_PASS);
+		SessionKey sessionKey = new SessionKey(cipheredSessionKey, pass);
+		temperNodeValueFromXPath(msg, XPATH_AUTH, getValidAuth(sessionKey));
+		
+		if (newMsg != null) {
+			msg = newMsg;
+		}
+	}
+	
+	private void changeActivateUserEmail(SOAPMessageContext smc) throws Exception {
+		SOAPMessage msg = smc.getMessage();
+		SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_ACTIVATE_USER, EVE_EMAIL);
+		if (newMsg != null) {
+			msg = newMsg;
+		}
+	}
+	
+	private void changeRequestTime(SOAPMessageContext smc) throws Exception {
+		SOAPMessage msg = smc.getMessage();
+		SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_REQUEST_TIME, EVE_EMAIL);
+		if (newMsg != null) {
+			msg = newMsg;
+		}
+	}
+	
 	private SOAPMessage temperNodeValueFromXPath(SOAPMessage msg, String xPathExpression, String newNodeValue) throws Exception {
 		Document document = SOAPMessageToDOMDocument(msg);
 		
@@ -105,7 +159,7 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
         XPath xPath = xPathFactory.newXPath();
 
         // Define namespace context
-        xPath.setNamespaceContext(getNamespaceContext());
+        xPath.setNamespaceContext(NAMESPACE_CONTEXT);
 
         XPathExpression expr = xPath.compile(xPathExpression);
 
@@ -122,6 +176,24 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
         nodes.item(0).setNodeValue(newNodeValue);
 		
 		return DOMDocumentToSOAPMessage(document);
+	}
+	
+	private SessionKeyAndTicketView getValidSessionKeyAndTicket() throws KerbyClientException, BadTicketRequest_Exception {
+		SecureRandom randomGenerator = new SecureRandom();
+		long nounce = randomGenerator.nextLong();
+		
+		KerbyClient client = new KerbyClient(KERBY_SERVER);
+		SessionKeyAndTicketView sessionKeyAndTicket = client.requestTicket(EVE_EMAIL, SERVER, nounce, 30);
+		
+		return sessionKeyAndTicket;
+	}
+	
+	private String getValidAuth(SessionKey sessionKey) throws KerbyException {
+		Auth auth = new Auth(EVE_EMAIL, new Date());
+		
+		RequestTime requestTime = new RequestTime(auth.getTimeRequest());
+		
+		return printHexBinary(auth.cipher(sessionKey.getKeyXY()).getData());
 	}
 	
 	/* ----------- XML helpers ------------- */
