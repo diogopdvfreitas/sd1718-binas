@@ -6,6 +6,8 @@ import static javax.xml.bind.DatatypeConverter.printHexBinary;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.xml.XMLConstants;
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.soap.MessageFactory;
 import javax.xml.soap.Name;
@@ -13,15 +15,11 @@ import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPHeader;
-import javax.xml.soap.SOAPHeaderElement;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.soap.SOAPBody;
 import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.ws.handler.MessageContext;
-import javax.xml.ws.handler.MessageContext.Scope;
 import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
 import javax.xml.xpath.XPath;
@@ -30,13 +28,10 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
 import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
-import pt.ulisboa.tecnico.sdis.kerby.SessionKey;
-import pt.ulisboa.tecnico.sdis.kerby.Ticket;
 
 /**
  * This SOAPHandler shows how to set/get values from headers in inbound/outbound
@@ -48,6 +43,9 @@ import pt.ulisboa.tecnico.sdis.kerby.Ticket;
  * property that can be accessed by other handlers or by the application.
  */
 public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
+	
+	private final String XPATH_ACTIVATE_USER = "//SOAP-ENV:Envelope/SOAP-ENV:Body/ns2:activateUser/email/text()";
+	private final String EVE_EMAIL = "eve@A37.binas.org";
 
 	//
 	// Handler interface implementation
@@ -78,20 +76,11 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 				// Simulate man in the middle
 
 				SOAPMessage msg = smc.getMessage();
-				SOAPPart sp = msg.getSOAPPart();
-				SOAPEnvelope se = sp.getEnvelope();
-				SOAPHeader sh = se.getHeader();
-
-				// check header
-				if (sh == null) {
-					System.out.println("Header not found.");
-					return true;
-				}
+				SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_ACTIVATE_USER, EVE_EMAIL);
 				
-				CipheredView cipheredTicket = getCipheredTicketFromHeader(se, sh);
-				System.out.println("Got ciphered ticket: " + printHexBinary(cipheredTicket.getData()));
-
-				Document document = SOAPMessageToDOMDocument(msg);
+				if (newMsg != null) {
+					msg = newMsg;
+				}
 				
 				System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 			}
@@ -104,26 +93,52 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 		return true;
 	}
 	
-	private CipheredView getCipheredTicketFromHeader(SOAPEnvelope se, SOAPHeader sh) throws KerbyException, RuntimeException, SOAPException {
-		Name name = se.createName("ticket", "kerby", "http://ws.binas.org/");
-		Iterator<?> it = sh.getChildElements(name);
+	/* ------------ Tempering helpers --------------- */
+	
+	private SOAPMessage temperNodeValueFromXPath(SOAPMessage msg, String xPathExpression, String newNodeValue) throws Exception {
+		Document document = SOAPMessageToDOMDocument(msg);
 		
-		if (!it.hasNext()) {
-			System.out.println("Header element not found.");
-			throw new RuntimeException("Ticket not found");
-		}
+		// Create XPath object to navigate DOM tree
+        XPathFactory xPathFactory = XPathFactory.newInstance();
+        XPath xPath = xPathFactory.newXPath();
+
+        // Define namespace context
+        xPath.setNamespaceContext(getNamespaceContext());
+
+        System.out.println("XPath expression: " + xPathExpression);
+
+        System.out.println("Compiling expression ...");
+        XPathExpression expr = xPath.compile(xPathExpression);
+
+        System.out.println("Evaluating expression ...");
+        Object result = expr.evaluate(document, XPathConstants.NODESET);
+        NodeList nodes = (NodeList) result;
+        
+        if (nodes.getLength() > 1 || nodes.getLength() == 0 || nodes.item(0).getNodeValue().length() == 0) {
+        	return null;
+        }
+
+        System.out.println("Results:");
+        for (int i = 0; i < nodes.getLength(); i++) {
+            System.out.println(nodes.item(i).getNodeValue());
+        }
+        
+        nodes.item(0).setNodeValue(newNodeValue);
 		
-		SOAPElement element = (SOAPElement) it.next();
-
-		String hexEncodedTicket = element.getValue();
-
-		CipheredView cipheredTicket = new CipheredView();
-				
-		cipheredTicket.setData(parseHexBinary(hexEncodedTicket));
-		return cipheredTicket;
+		return DOMDocumentToSOAPMessage(document);
 	}
 	
-	private SOAPMessage DOMDocumentToSOAPMessage(Document doc) throws Exception {
+	/* ----------- XML helpers ------------- */
+	
+	private Document SOAPMessageToDOMDocument(SOAPMessage msg) throws Exception {
+
+        // SOAPPart implements org.w3c.dom.Document interface
+        Document part = msg.getSOAPPart();
+
+        return part;
+    }
+
+    private SOAPMessage DOMDocumentToSOAPMessage(Document doc) throws Exception {
         SOAPMessage newMsg = null;
 
         MessageFactory mf = MessageFactory.newInstance();
@@ -133,14 +148,33 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 
         return newMsg;
     }
-	
-	private static Document SOAPMessageToDOMDocument(SOAPMessage msg) throws Exception {
+    
+    private NamespaceContext getNamespaceContext() {
+    	return new NamespaceContext() {
 
-        // SOAPPart implements org.w3c.dom.Document interface
-        Document part = msg.getSOAPPart();
+            @Override
+            public String getNamespaceURI(String prefix) {
+                if (prefix == null) throw new NullPointerException("Null prefix");
+                else if ("SOAP-ENV".equals(prefix)) return "http://schemas.xmlsoap.org/soap/envelope/";
+                else if ("ns2".equals(prefix)) return "http://ws.binas.org/";
+                else if ("schema".equals(prefix)) return "http://www.w3.org/2001/XMLSchema-instance";
+                else if ("xml".equals(prefix)) return XMLConstants.XML_NS_URI;
+                return XMLConstants.NULL_NS_URI;
+            }
 
-        return part;
+            // This method is not necessary for XPath processing.
+            public String getPrefix(String uri) {
+                throw new UnsupportedOperationException();
+            }
+
+            // This method is not necessary for XPath processing either.
+            public Iterator<?> getPrefixes(String uri) {
+                throw new UnsupportedOperationException();
+            }
+
+        };
     }
+	
 
 	/** The handleFault method is invoked for fault message processing. */
 	@Override

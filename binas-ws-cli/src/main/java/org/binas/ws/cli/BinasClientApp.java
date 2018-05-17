@@ -84,7 +84,13 @@ public class BinasClientApp {
 		
 		System.out.println(BinasClientApp.class.getSimpleName() + " running");
 		
-			client.testPing("Client");
+		client.testPing("Client");
+		try {
+			client.activateUser(user);
+		} catch (EmailExists_Exception | InvalidEmail_Exception | Internal_Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	 }
 }
