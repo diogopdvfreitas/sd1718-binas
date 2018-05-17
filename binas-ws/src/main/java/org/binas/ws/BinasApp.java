@@ -7,6 +7,7 @@ import java.util.Properties;
 
 import org.binas.domain.BinasManager;
 
+import example.ws.handler.EveSimulatorHandler;
 import example.ws.handler.KerberosServerHandler;
 
 public class BinasApp {
@@ -46,6 +47,7 @@ public class BinasApp {
 		
 		try {
 			KerberosServerHandler.setStaticKerbyProperties(user, pass);
+			EveSimulatorHandler.toServer();
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

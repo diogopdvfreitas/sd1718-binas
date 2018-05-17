@@ -46,6 +46,7 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 	
 	private final String XPATH_ACTIVATE_USER = "//SOAP-ENV:Envelope/SOAP-ENV:Body/ns2:activateUser/email/text()";
 	private final String EVE_EMAIL = "eve@A37.binas.org";
+	private static boolean TO_SERVER = false;
 
 	//
 	// Handler interface implementation
@@ -70,19 +71,23 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 
 		try {
 			if (!outboundElement.booleanValue()) {
-				System.out.println("\n-------------------- SNIFF SNIFF I AM EVE AND I AM EVIL SNIFF SNIFF --------------------\n");
-				
-				// Message IN
-				// Simulate man in the middle
-
-				SOAPMessage msg = smc.getMessage();
-				SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_ACTIVATE_USER, EVE_EMAIL);
-				
-				if (newMsg != null) {
-					msg = newMsg;
+				if (TO_SERVER) {
+					System.out.println("\n-------------------- I AM EVE: CAUGHT MESSAGE BEFORE SERVER--------------------\n");
+					
+					// Message IN
+					// Simulate man in the middle
+					
+					SOAPMessage msg = smc.getMessage();
+					SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_ACTIVATE_USER, EVE_EMAIL);
+					
+					if (newMsg != null) {
+						msg = newMsg;
+					}
+					
+					System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");					
+				} else {
+					
 				}
-				
-				System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 			}
 		} catch (Exception e) {
 			System.out.print("Caught exception in handleMessage: ");
@@ -105,24 +110,17 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
         // Define namespace context
         xPath.setNamespaceContext(getNamespaceContext());
 
-        System.out.println("XPath expression: " + xPathExpression);
-
-        System.out.println("Compiling expression ...");
         XPathExpression expr = xPath.compile(xPathExpression);
 
-        System.out.println("Evaluating expression ...");
         Object result = expr.evaluate(document, XPathConstants.NODESET);
         NodeList nodes = (NodeList) result;
         
         if (nodes.getLength() > 1 || nodes.getLength() == 0 || nodes.item(0).getNodeValue().length() == 0) {
         	return null;
         }
-
-        System.out.println("Results:");
-        for (int i = 0; i < nodes.getLength(); i++) {
-            System.out.println(nodes.item(i).getNodeValue());
-        }
         
+        System.out.println("Using XPath expression: " + xPathExpression);
+        System.out.println("Changing " + nodes.item(0).getNodeValue() + " to " + newNodeValue);
         nodes.item(0).setNodeValue(newNodeValue);
 		
 		return DOMDocumentToSOAPMessage(document);
@@ -190,6 +188,15 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 	@Override
 	public void close(MessageContext messageContext) {
 		// nothing to clean up
+	}
+	
+	// Declares if this handler will deal with messages going to the server or to the client
+	public static void toServer() {
+		TO_SERVER = true;
+	}
+	
+	public static void toClient() {
+		TO_SERVER = false;
 	}
 
 }

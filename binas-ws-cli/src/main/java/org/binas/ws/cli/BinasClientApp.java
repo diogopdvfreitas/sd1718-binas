@@ -9,6 +9,7 @@ import org.binas.ws.EmailExists_Exception;
 import org.binas.ws.Internal_Exception;
 import org.binas.ws.InvalidEmail_Exception;
 
+import example.ws.handler.EveSimulatorHandler;
 import example.ws.handler.KerberosClientHandler;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
 
@@ -74,6 +75,7 @@ public class BinasClientApp {
 		
 		try {
 			KerberosClientHandler.setStaticKerbyProperties(user, pass, server, kerbyServer);
+			EveSimulatorHandler.toClient();
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
