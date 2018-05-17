@@ -50,7 +50,7 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 	private Key sessionKey;
 	private Auth auth;
 	
-	private static final long TIME_VALIDATION_MARGIN = 2000; // milliseconds 
+	private static final long TIME_VALIDATION_MARGIN = 5000; // milliseconds 
 
 	//
 	// Handler interface implementation
@@ -100,10 +100,11 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 				Ticket ticket = getTicketFromHeader(se, sh);
 				validateTicket(ticket);
 				
-				// put ticket in a property context
-				smc.put(TICKET, ticket);
-				
 				sessionKey = ticket.getKeyXY();
+				
+				// put session key in a property context
+				smc.put(KerberosClientHandler.SESSION_KEY, sessionKey);
+				
 				auth = getAuthFromHeader(se, sh);
 				
 				validateAuth(auth);

@@ -117,7 +117,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 				generateTicketHeader(se, cipheredTicket);
 				
 				// put session key in a property context
-				smc.put(SESSION_KEY, sessionKey);
+				smc.put(SESSION_KEY, sessionKey.getKeyXY());
 
 			} else {
 				System.out.println("Reading header from INbound SOAP message...");

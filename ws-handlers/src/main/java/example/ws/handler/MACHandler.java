@@ -25,7 +25,7 @@ import javax.xml.ws.handler.soap.SOAPMessageContext;
 
 import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
 import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
-import pt.ulisboa.tecnico.sdis.kerby.SessionKey;
+import java.security.Key;
 
 import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
@@ -51,8 +51,8 @@ public class MACHandler  implements SOAPHandler<SOAPMessageContext>{
 				TransformerFactory.newInstance().newTransformer().transform(source, new StreamResult(stringResult));
 				String message = stringResult.toString();
 				
-				SessionKey sessionKey = (SessionKey) smc.get(KerberosClientHandler.SESSION_KEY);
-				String sessionKeyHexEncoded = printHexBinary(sessionKey.getKeyXY().getEncoded());
+				Key sessionKey = (Key) smc.get(KerberosClientHandler.SESSION_KEY);
+				String sessionKeyHexEncoded = printHexBinary(sessionKey.getEncoded());
 				String result = message + sessionKeyHexEncoded;
 				
 				MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
@@ -60,15 +60,6 @@ public class MACHandler  implements SOAPHandler<SOAPMessageContext>{
 				byte[] hmac = messageDigest.digest();
 				
 				generateMACHeader(se, hmac);
-				
-				/*
-				 * StringWriter stringResult = new StringWriter();
-				TransformerFactory.newInstance().newTransformer().transform(source, new StreamResult(stringResult));
-				String message = stringResult.toString();
-				 */
-				
-				
-				System.out.println("------------------------------------- eu sou a mensagem que tu queres Joao\n" + message);
 				
 			} else {
 				
@@ -84,8 +75,8 @@ public class MACHandler  implements SOAPHandler<SOAPMessageContext>{
 				TransformerFactory.newInstance().newTransformer().transform(source, new StreamResult(stringResult));
 				String message = stringResult.toString();
 				
-				SessionKey sessionKey = (SessionKey) smc.get(KerberosClientHandler.SESSION_KEY);
-				String sessionKeyHexEncoded = printHexBinary(sessionKey.getKeyXY().getEncoded());
+				Key sessionKey = (Key) smc.get(KerberosClientHandler.SESSION_KEY);
+				String sessionKeyHexEncoded = printHexBinary(sessionKey.getEncoded());
 				String result = message + sessionKeyHexEncoded;
 				
 				MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
@@ -100,12 +91,7 @@ public class MACHandler  implements SOAPHandler<SOAPMessageContext>{
 				} 
 				
 				byte[] hmacFromClient = getMACFromHeader(se, sh);
-				
-				/*
-				// put ticket in a property context
-				smc.put(byte[], hmacFromClient);
-				*/
-				
+								
 				boolean messageIntegrity =  Arrays.equals(hmac, hmacFromClient);
 				
 				if(!messageIntegrity) { 

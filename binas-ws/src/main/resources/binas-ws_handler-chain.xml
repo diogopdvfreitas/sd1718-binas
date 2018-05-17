@@ -55,6 +55,10 @@
         </handler>
         
         <handler>
+            <handler-class>example.ws.handler.MACHandler</handler-class>
+        </handler>
+        
+        <handler>
             <handler-class>example.ws.handler.KerberosServerHandler</handler-class>
         </handler>        
         
