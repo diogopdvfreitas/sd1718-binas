@@ -51,6 +51,10 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 	private Auth auth;
 	
 	private static final long TIME_VALIDATION_MARGIN = 5000; // milliseconds 
+	
+	public static final String REQUEST_TIME_NAME = "requestTime";
+	public static final String REQUEST_TIME_PREFIX = "kerby";
+	public static final String REQUEST_TIME_NAMESPACE = "http://ws.binas.org/";
 
 	//
 	// Handler interface implementation
@@ -174,7 +178,7 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 			sh = se.addHeader();
 		
 		// add header element (name, namespace prefix, namespace)
-		Name name = se.createName("requestTime", "kerby", "http://ws.binas.org/");
+		Name name = se.createName(REQUEST_TIME_NAME, REQUEST_TIME_PREFIX, REQUEST_TIME_NAMESPACE);
 		SOAPHeaderElement element = sh.addHeaderElement(name);
 
 		// add header element value
@@ -184,7 +188,8 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 	/* ============ Headers ============  */
 	
 	private Ticket getTicketFromHeader(SOAPEnvelope se, SOAPHeader sh) throws KerbyException, RuntimeException, SOAPException {
-		Name name = se.createName("ticket", "kerby", "http://ws.binas.org/");
+		Name name = se.createName(KerberosClientHandler.TICKET_NAME,
+				KerberosClientHandler.TICKET_PREFIX, KerberosClientHandler.TICKET_NAMESPACE);
 		Iterator<?> it = sh.getChildElements(name);
 		
 		if (!it.hasNext()) {
@@ -205,7 +210,8 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext> {
 	}
 	
 	private Auth getAuthFromHeader(SOAPEnvelope se, SOAPHeader sh) throws KerbyException, RuntimeException, SOAPException {
-		Name name = se.createName("auth", "kerby", "http://ws.binas.org/");
+		Name name = se.createName(KerberosClientHandler.AUTH_NAME,
+				KerberosClientHandler.AUTH_PREFIX, KerberosClientHandler.AUTH_NAMESPACE);
 		Iterator<?> it = sh.getChildElements(name);
 		
 		if (!it.hasNext()) {

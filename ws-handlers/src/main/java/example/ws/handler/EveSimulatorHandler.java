@@ -59,9 +59,9 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 		Boolean outboundElement = (Boolean) smc.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
 
 		try {
+			System.out.println("\n------------------------------- I AM EVE: CAUGHT MESSAGE -------------------------------\n");
 			if (!outboundElement.booleanValue()) {
 				if (TO_SERVER) {
-					System.out.println("\n-------------------- I AM EVE: CAUGHT MESSAGE BEFORE SERVER--------------------\n");
 					
 					// Message IN
 					// Simulate man in the middle
@@ -73,20 +73,19 @@ public class EveSimulatorHandler implements SOAPHandler<SOAPMessageContext> {
 						msg = newMsg;
 					}
 					
-					System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");					
-				} else {
-					System.out.println("\n-------------------- I AM EVE: CAUGHT MESSAGE BEFORE SERVER--------------------\n");
-					
+				} else {					
 					SOAPMessage msg = smc.getMessage();
 					
+					/*
 					SOAPMessage newMsg = temperNodeValueFromXPath(msg, XPATH_REQUEST_TIME, EVE_EMAIL);
 					if (newMsg != null) {
 						msg = newMsg;
 					}
+					*/
 					
-					System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 				}
 			}
+			System.out.println("\n------------------------------- FINISHED MY EVIL WORK ----------------------------------\n");
 		} catch (Exception e) {
 			System.out.print("Caught exception in handleMessage: ");
 			System.out.println(e);

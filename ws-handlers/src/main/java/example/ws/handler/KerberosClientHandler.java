@@ -61,6 +61,14 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	
 	private static final int VALID_DURATION = 30; // 30 seconds
 	private static final SecureRandom randomGenerator = new SecureRandom();
+	
+	public static final String AUTH_NAME = "auth";
+	public static final String AUTH_PREFIX = "kerby";
+	public static final String AUTH_NAMESPACE = "http://ws.binas.org/";
+	
+	public static final String TICKET_NAME = "ticket";
+	public static final String TICKET_PREFIX = "kerby";
+	public static final String TICKET_NAMESPACE = "http://ws.binas.org/";
 
 	//
 	// Handler interface implementation
@@ -214,7 +222,8 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 	private RequestTime getRequestTimeFromHeader(SOAPEnvelope se, SOAPHeader sh) throws SOAPException,
 		KerbyException, RuntimeException {
 		
-		Name name = se.createName("requestTime", "kerby", "http://ws.binas.org/");
+		Name name = se.createName(KerberosServerHandler.REQUEST_TIME_NAME,
+				KerberosServerHandler.REQUEST_TIME_PREFIX, KerberosServerHandler.REQUEST_TIME_NAMESPACE);
 		Iterator<?> it = sh.getChildElements(name);
 		
 		if (!it.hasNext()) {
@@ -248,7 +257,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 			sh = se.addHeader();
 		
 		// add header element (name, namespace prefix, namespace)
-		Name name = se.createName("auth", "kerby", "http://ws.binas.org/");
+		Name name = se.createName(AUTH_NAME, AUTH_PREFIX, AUTH_NAMESPACE);
 		SOAPHeaderElement element = sh.addHeaderElement(name);
 
 		// add header element value
@@ -264,7 +273,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext> {
 			sh = se.addHeader();
 		
 		// add header element (name, namespace prefix, namespace)
-		Name name = se.createName("ticket", "kerby", "http://ws.binas.org/");
+		Name name = se.createName(TICKET_NAME, TICKET_PREFIX, TICKET_NAMESPACE);
 		SOAPHeaderElement element = sh.addHeaderElement(name);
 
 		// add header element value
