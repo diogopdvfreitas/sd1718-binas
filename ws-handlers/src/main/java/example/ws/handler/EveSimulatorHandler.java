@@ -1,8 +1,5 @@
 package example.ws.handler;
 
-import static javax.xml.bind.DatatypeConverter.parseHexBinary;
-import static javax.xml.bind.DatatypeConverter.printHexBinary;
-
 import java.util.Iterator;
 import java.util.Set;
 
@@ -10,14 +7,8 @@ import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.soap.MessageFactory;
-import javax.xml.soap.Name;
-import javax.xml.soap.SOAPElement;
-import javax.xml.soap.SOAPEnvelope;
-import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPHeader;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
-import javax.xml.soap.SOAPBody;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.handler.soap.SOAPHandler;
@@ -29,9 +20,6 @@ import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
-
-import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
-import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
 
 /**
  * This SOAPHandler shows how to set/get values from headers in inbound/outbound
