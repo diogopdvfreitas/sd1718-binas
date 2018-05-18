@@ -6,10 +6,7 @@ import java.util.Set;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPBody;
-import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPMessage;
-import javax.xml.soap.SOAPPart;
 import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
@@ -41,11 +38,7 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
 			if (!outboundElement.booleanValue()) {
 
 				// get SOAP envelope
-				SOAPMessage msg = smc.getMessage();
-				SOAPPart sp = msg.getSOAPPart();
-				SOAPEnvelope se = sp.getEnvelope();
-				SOAPBody sb = se.getBody();
-								
+				SOAPMessage msg = smc.getMessage();								
 				Document document = SOAPMessageToDOMDocument(msg);
 				
 				// Create XPath object to navigate DOM tree

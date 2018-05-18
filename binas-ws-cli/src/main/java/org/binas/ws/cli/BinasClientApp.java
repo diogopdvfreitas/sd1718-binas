@@ -3,11 +3,11 @@ package org.binas.ws.cli;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.List;
 import java.util.Properties;
 
-import org.binas.ws.EmailExists_Exception;
-import org.binas.ws.Internal_Exception;
-import org.binas.ws.InvalidEmail_Exception;
+import org.binas.ws.CoordinatesView;
+import org.binas.ws.StationView;
 
 import example.ws.handler.EveSimulatorHandler;
 import example.ws.handler.KerberosClientHandler;
@@ -86,11 +86,20 @@ public class BinasClientApp {
 		
 		System.out.println(BinasClientApp.class.getSimpleName() + " running");
 		
-		//client.testPing("Client");
 		try {
+			client.testPing("Client");
+
 			client.activateUser(user);
-			client.activateUser(kerberosProps.getProperty("user2"));
-		} catch (EmailExists_Exception | InvalidEmail_Exception | Internal_Exception e) {
+			// client.activateUser(kerberosProps.getProperty("user2"));
+			
+			CoordinatesView cv = new CoordinatesView();
+			cv.setX(0); cv.setY(0);
+			
+			List<StationView> stations = client.listStations(1, cv);
+			
+			client.rentBina(stations.get(0).getId(), user);
+			client.returnBina(stations.get(0).getId(), user);
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
